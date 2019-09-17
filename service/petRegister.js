@@ -76,7 +76,7 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 }
 
 exports.queryRegStatu = async (openId) => {
-     const sql = `select p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+     const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
@@ -96,11 +96,25 @@ exports.findPetColor = async()=>{
      const sql = `select * from pet_color`;
      return await conn.query(sql);
 }
+
 function addyear(){
     return moment().add(1, 'y').format('YYYYMMDDHHmmss');
 }
+
 exports.isWxPubBind = async (unionId, openId) => {
       const sql = `select * from wx_pub where unionId = '${unionId}' or openId = '${openId}' `;
       const result = await conn.query(sql);
       return result;
+}
+
+exports.eiditDogRegNum = async (dogRegNum,dogRegId,creatorId ) => {
+    const sql = ` update pet_register_info set dog_reg_num = ? where id =?  and creator_id = ? `;
+    const result = await conn.query(sql, [dogRegNum, dogRegId, creatorId]);
+    return result;
+}
+
+exports.isBindDogRegNum = async (dogRegNum) => {
+ const sql = ` select * from  pet_register_info where dog_reg_num = ?`;
+ const result = await conn.query(sql, [dogRegNum]);
+ return result[0].length > 0;
 }

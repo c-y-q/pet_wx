@@ -40,7 +40,7 @@ router.post('/addpetRegist', async (req, res, next) => {
       respMsg: " lost openid"
     }
   }
- if (!params.unionid) {
+  if (!params.unionid) {
     throw {
       status: '0001',
       respMsg: '缺失unionid！'
@@ -48,10 +48,10 @@ router.post('/addpetRegist', async (req, res, next) => {
   }
   const bindWxUserInfo = await service.isWxPubBind(params.unionid, params.openid);
   if (bindWxUserInfo[0].length == 0) {
-   throw {
-     status: '0001',
-     respMsg: " to bind wxpulic !"
-   }
+    throw {
+      status: '0001',
+      respMsg: " to bind wxpulic !"
+    }
   }
   if (!params.petPhotoUrl) {
     throw {
@@ -77,7 +77,7 @@ router.post('/addpetRegist', async (req, res, next) => {
       respMsg: " lost areaCode"
     }
   }
-   if (params.dogRegNum) {
+  if (params.dogRegNum) {
     const result = await service.judgedogRegNum(dogRegNum);
     if (result[0] && result[0].length > 0) {
       throw {
@@ -86,44 +86,12 @@ router.post('/addpetRegist', async (req, res, next) => {
       }
     }
   }
-  /*
-   if (!params.petName) {
-     throw {
-       status: '0001',
-       respMsg: " lost petName"
-     }
-   }
-   if (!params.gender) {
-     throw {
-       status: '0001',
-       respMsg: " lost gender"
-     }
-   }
-   if (!params.breed) {
-     throw {
-       status: '0001',
-       respMsg: " lost breed"
-     }
-   }
-   if (!params.coatColor) {
-     throw {
-       status: '0001',
-       respMsg: " lost coatColor"
-     }
-   }
-   if (!params.birthday) {
-     throw {
-       status: '0001',
-       respMsg: " lost birthday"
-     }
-   }
-  */
-   if (!params.realName) {
-      throw {
-        respCode: '0001',
-        respMsg: " lost realName"
-      }
+  if (!params.realName) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost realName"
     }
+  }
   if (!regIdCard.test(params.idNumber)) {
     throw {
       respCode: '0001',
@@ -143,57 +111,60 @@ router.post('/addpetRegist', async (req, res, next) => {
   const addPetPreventionResult = await service.addPetPreventionInfo(params.openid, petRegId, params);
   res.json({
     status: 200,
-    respMsg:'提交信息成功！'
+    respMsg: '提交信息成功！'
   })
 })
 
-router.post('/wxLogin',async(req,res,next)=>{
-   const code = req.body.code;
-   const appId = 'wx8a3e72751aa71401';
-   const appSecreat = '0eac0a4f5ed9a3f46dc882833d035956';
-   //获取用户的openId和sessionKey
-   const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecreat}&js_code=${code}&grant_type=authorization_code`;
-   const { data} = await axios.get(url);
-   console.log(157,data)
-   if (data.errcode) {
-     throw{
-       status:403,
-       respMsg: 'code 非法！'
-     }
-   }
- if (!data.unionid) {
+router.post('/wxLogin', async (req, res, next) => {
+  const code = req.body.code;
+  const appId = 'wx8a3e72751aa71401';
+  const appSecreat = '0eac0a4f5ed9a3f46dc882833d035956';
+  //获取用户的openId和sessionKey
+  const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecreat}&js_code=${code}&grant_type=authorization_code`;
+  const {
+    data
+  } = await axios.get(url);
+  console.log(157, data)
+  if (data.errcode) {
+    throw {
+      status: 403,
+      respMsg: 'code 非法！'
+    }
+  }
+  if (!data.unionid) {
     throw {
       status: '0001',
       respMsg: '缺失unionid !'
     }
   }
   const bindWxUserInfo = await service.isWxPubBind(data.unionid, data.openid);
-  console.log(117,bindWxUserInfo[0])
-   if (bindWxUserInfo[0].length == 0) {
-     throw {
-       status: 10010,
-       respMsg: " to bind wxpulic !"
-     }
-   }
-   res.json({
-     data
-   });
+  if (bindWxUserInfo[0].length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  res.json({
+    data
+  });
 })
+
 router.post('/queryRegStatu', async (req, res) => {
- const openId = req.body.openid;
- const result = await service.queryRegStatu(openId);
+  const openId = req.body.openid;
+  const result = await service.queryRegStatu(openId);
   let petRegInfo = [];
   if (result[0].length > 0) {
     petRegInfo = result[0].map(obj => {
-     let checkStatus = obj.audit_status;
+      let checkStatus = obj.audit_status;
       return {
+        "payType": obj.pay_type,
         "petColor": obj.petColor,
-        "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ?'雌':'未知' ,
+        "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
         "petType": obj.petType,
-        "petRegId":obj.id,
-        "checkStatus": checkStatus == 1 ? '已通过' : checkStatus==2?'未通过':'审核中',
+        "petRegId": obj.id,
+        "checkStatus": checkStatus == 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
         "auditRemarks": obj.audit_remarks,
-        "areaName": obj.name ||'',
+        "areaName": obj.name || '',
         "dogRegNum": obj.dog_reg_num || 0,
         "petName": obj.pet_name || '',
         "petState": obj.pet_state,
@@ -211,26 +182,59 @@ router.post('/queryRegStatu', async (req, res) => {
     result: petRegInfo
   });
 });
-router.get('/getPetColor', async(req, res) => {
-   const result = await service.findPetColor();
-   const petColor = result[0].reduce((pre,cur)=>{
-     pre[cur.id] = cur.color;
-     return pre;
-   },{})
-    res.json({
-      status:200,
-      petColor
-    });
+
+router.get('/getPetColor', async (req, res) => {
+  const result = await service.findPetColor();
+  const petColor = result[0].reduce((pre, cur) => {
+    pre[cur.id] = cur.color;
+    return pre;
+  }, {})
+  res.json({
+    status: 200,
+    petColor
+  });
 });
-router.get('/getPetType',async(req,res)=>{
-   const result = await service.findPetType();
-   const petType = result[0].reduce((pre, cur) => {
-     pre[cur.id] = cur.name;
-     return pre;
-   }, {})
-   res.json({
-     status: 200,
-     petType
-   });
+
+router.get('/getPetType', async (req, res) => {
+  const result = await service.findPetType();
+  const petType = result[0].reduce((pre, cur) => {
+    pre[cur.id] = cur.name;
+    return pre;
+  }, {})
+  res.json({
+    status: 200,
+    petType
+  });
 })
+
+router.post('/addDogRegNum', async (req, res) => {
+     const opendId = req.body.openid;
+     const unionId = req.body.unionid;
+     const dogRegNum = req.body.dogRegNum;
+     const dogRegId = req.body.petRegId;
+     const bindWxUserInfo = await service.isWxPubBind(unionId, opendId);
+     if (bindWxUserInfo[0].length == 0) {
+       throw {
+         status: 10010,
+         respMsg: " to bind wxpulic !"
+       }
+     }
+     /**
+      * 检测改宠物是否已经绑定编号
+      */
+     const isBindDogRegNum = await service.isBindDogRegNum(dogRegNum);
+     if (isBindDogRegNum) {
+       throw {
+         status: '0001',
+         respMsg: "dogRegNum has bind !"
+       }
+     }
+     const result = await service.eiditDogRegNum(dogRegNum, dogRegId, opendId);
+     res.json({
+       status:200,
+        respMsg: "bind success !"
+     });
+})
+
+
 module.exports = router;
