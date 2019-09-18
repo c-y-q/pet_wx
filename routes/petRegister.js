@@ -4,7 +4,8 @@ const service = require('../service/petRegister');
 const multer = require('multer');
 const uuidTool = require('uuid/v4');
 const axios = require('axios');
-const checkLogin = require('../middlewares/check').checkLogin;
+const regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
+const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
 const moment = require('moment');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -32,8 +33,7 @@ router.post('/uploadImg', upload.single('file'), async (req, res, next) => {
  */
 router.post('/addpetRegist', async (req, res, next) => {
   const params = req.body;
-  const regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
-  const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
+
   if (!params.openid) {
     throw {
       status: '0001',
@@ -160,15 +160,14 @@ router.post('/queryRegStatu', async (req, res) => {
         "payType": obj.pay_type,
         "petColor": obj.petColor,
         "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
-        "petType": obj.petType,
         "petRegId": obj.id,
         "checkStatus": checkStatus == 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
         "auditRemarks": obj.audit_remarks,
         "areaName": obj.name || '',
-        "dogRegNum": obj.dog_reg_num || 0,
+        "dogRegNum": obj.dog_reg_num || '',
         "petName": obj.pet_name || '',
         "petState": obj.pet_state,
-        "renewTime": moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
+        "renewTime": obj.renew_time? moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'):'',
         "createTime": moment(obj.create_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
         "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', 'http://192.168.50.111:7001') || '',
         "masterName": obj.real_name || '',
@@ -219,22 +218,176 @@ router.post('/addDogRegNum', async (req, res) => {
          respMsg: " to bind wxpulic !"
        }
      }
-     /**
-      * 检测改宠物是否已经绑定编号
-      */
-     const isBindDogRegNum = await service.isBindDogRegNum(dogRegNum);
-     if (isBindDogRegNum) {
+     if (!opendId || !unionId) {
        throw {
-         status: '0001',
-         respMsg: "dogRegNum has bind !"
+         status: 10011,
+         respMsg: " opendId, unionId is not null !"
        }
      }
-     const result = await service.eiditDogRegNum(dogRegNum, dogRegId, opendId);
+     if (!dogRegNum) {
+      throw {
+        status: 10011,
+        respMsg: " dogRegNum is not null !"
+      }
+     }
+     if (!dogRegId) {
+        throw {
+          status: 10011,
+          respMsg: " petRegId is not null !"
+        }
+      }
+     const flag = await service.isBinwxRef(dogRegNum, dogRegId, opendId, unionId);
+     if (flag) {
+       throw {
+         status: 10011,
+         respMsg: " you have bind this dog regsiter number !"
+       }
+     }
+     const result = await service.eiditDogRegNum(dogRegNum, dogRegId, opendId, unionId);
      res.json({
-       status:200,
+        status:200,
         respMsg: "bind success !"
      });
 })
 
+router.post('/findNotBindRegIdsByOpenId', async (req, res) => {
+    const opendId = req.body.openid;
+    const unionId = req.body.unionid;
+    const bindWxUserInfo = await service.isWxPubBind(unionId, opendId);
+    if (bindWxUserInfo[0].length == 0) {
+      throw {
+        status: 10010,
+        respMsg: " to bind wxpulic !"
+      }
+    }
+    const result = await service.findNotBindRegIdsByOpenId(opendId);
+    res.json({
+       status:200,
+       result: result[0]
+    });
+});
 
+router.post('/findNotHasBindDogRegNum', async (req, res) => {
+  const opendId = req.body.openid;
+  const unionId = req.body.unionid;
+  const dogRegNum = req.body.dogRegNum;
+  if (!opendId || !unionId) {
+     throw{
+        respCode: '0001',
+        respMsg: " lost params"
+     }
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, opendId);
+  if (bindWxUserInfo[0].length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  if (!dogRegNum) {
+     throw {
+       respCode: '0001',
+       respMsg: " lost dogRegNum"
+     }
+  }
+  const result = await service.findNotHasBindDogRegNum(dogRegNum);
+  res.json({
+    status: 200,
+    binding: result[0].length > 0
+  });
+});
+
+router.post('/findPetInfosByIdNum',async(req,res)=>{
+  const idNumber = req.body.idNumber;
+  const realName = req.body.realName;
+  const contactPhone = req.body.contactPhone;
+  if (!regIdCard.test(idNumber)) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost idNumber"
+    }
+  }
+  if (!regPhoneNum.test(contactPhone)) {
+     throw {
+       respCode: '0001',
+       respMsg: " lost contactPhone"
+     }
+  }
+ const result = await service.findPetInfosByIdNum(idNumber, realName, contactPhone);
+ let petRegInfo = [];
+ if (result[0].length > 0) {
+   petRegInfo = result[0].map(obj => {
+     let checkStatus = obj.audit_status;
+     return {
+       "payType": obj.pay_type,
+       "petColor": obj.petColor,
+       "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
+       "petRegId": obj.id,
+       "checkStatus": checkStatus == 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
+       "auditRemarks": obj.audit_remarks,
+       "areaName": obj.name || '',
+       "dogRegNum": obj.dog_reg_num || '',
+       "petName": obj.pet_name || '',
+       "petState": obj.pet_state,
+       "renewTime": obj.renew_time? moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'):'',
+       "createTime": moment(obj.create_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
+       "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', 'http://192.168.50.111:7001') || '',
+       "masterName": obj.real_name || '',
+       "masterAdress": obj.residential_address || '',
+       "contactPhone": obj.contact_phone || ''
+     }
+   })
+ }
+ res.json({
+   status: 200,
+   result: petRegInfo
+ });
+});
+
+router.post('/queryRegList', async (req, res) => {
+  const opendId = req.body.openid;
+  const unionId = req.body.unionid;
+  const idNumber = req.body.idNumber;
+  if (!opendId || !unionId) {
+      throw {
+        respCode: '0001',
+        respMsg: " lost params"
+      }
+  }
+  if (!regIdCard.test(idNumber)) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost idNumber"
+    }
+  }
+  const result = await service.queryRegList(openIds, unionId, idNumber);
+  let petRegInfo = [];
+  if (result[0].length > 0) {
+    petRegInfo = result[0].map(obj => {
+      let checkStatus = obj.audit_status;
+      return {
+        "payType": obj.pay_type,
+        "petColor": obj.petColor,
+        "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
+        "petRegId": obj.id,
+        "checkStatus": checkStatus == 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
+        "auditRemarks": obj.audit_remarks,
+        "areaName": obj.name || '',
+        "dogRegNum": obj.dog_reg_num || '',
+        "petName": obj.pet_name || '',
+        "petState": obj.pet_state,
+        "renewTime": obj.renew_time ? moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss') : '',
+        "createTime": moment(obj.create_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
+        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', 'http://192.168.50.111:7001') || '',
+        "masterName": obj.real_name || '',
+        "masterAdress": obj.residential_address || '',
+        "contactPhone": obj.contact_phone || ''
+      }
+    })
+  }
+  res.json({
+    status: 200,
+    result: petRegInfo
+  });
+});
 module.exports = router;

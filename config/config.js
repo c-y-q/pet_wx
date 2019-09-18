@@ -11,7 +11,6 @@ module.exports = {
         password: '123456',
         database: 'manage-sys_db',
         charset: 'utf8', 
-        acquireTimeout: 10000, //获取连接的毫秒
         waitForConnections: true,
         connectionLimit: 10, //单次可创建最大连接数
         queueLimit: 0 //连接池的最大请求数，从getConnection方法前依次排队。设置为0将没有限制
