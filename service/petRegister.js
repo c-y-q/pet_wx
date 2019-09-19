@@ -110,17 +110,18 @@ exports.isWxPubBind = async (unionId, openId) => {
     return result;
 }
 
-exports.eiditDogRegNum = async (dogRegNum, dogRegId, creatorId, unionId) => {
+exports.eiditDogRegNum = async (dogRegNum, dogRegId, creatorId, unionId, idNumber) => {
     const wx_pet_ref_sql = ' insert into wx_pub_petInf_rel set ? ';
-    const wx_pub_sql = ` update pet_register_info set dog_reg_num = ? where id =?  and creator_id = ? `;
+    const wx_pub_sql = ` update pet_register_info set dog_reg_num = ? where id =? and dog_reg_num = '' `;
     const wxPubPetInfRel = {
         unionId: unionId,
         pet_reg_id: dogRegId,
         openId: creatorId,
-        dog_reg_num: dogRegNum
+        dog_reg_num: dogRegNum,
+        id_number: idNumber
     }
     const wx_pet_ref = conn.query(wx_pet_ref_sql, wxPubPetInfRel);
-    const wx_pub = conn.query(wx_pub_sql, [dogRegNum, dogRegId, creatorId]);
+    const wx_pub = conn.query(wx_pub_sql, [dogRegNum, dogRegId]);
     return await Promise.all([wx_pet_ref, wx_pub]);
 }
 
@@ -175,11 +176,11 @@ exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
 /**
  * 查询微信已绑定狗证的
  */
- exports.queryRegList = async (openIds, unionId, idNumber) => {
-  const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openIds, unionId]);
+ exports.queryRegList = async (openId, unionId) => {
+  const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openId, unionId]);
   const wxPubRegIds = wxPubRegIdsResult[0].map(obj => obj.pet_reg_id && obj.pet_reg_id);
-  const petRegInfoIdsResult = await conn.query(`select pet_reg_id from pet_register_info where creator_id = ? or idNumber = ?`, [openIds, idNumber]);
-  const petRegInfoIds = petRegInfoIdsResult[0].map(obj => obj.pet_reg_id && obj.pet_reg_id);
+  const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where creator_id = ? and pay_type <> -1`, [openId]);
+  const petRegInfoIds = petRegInfoIdsResult[0].map(obj => obj.id);
   const resultRegIds = Array.from(new Set(wxPubRegIds.concat(petRegInfoIds)));
   if (resultRegIds.length == 0){
       return [[]];
@@ -188,11 +189,51 @@ exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
                  from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
-                 and p.id in (${resultRegIds.join(',')})
+                 and p.id in (?)
+                 and p.dog_reg_num <> ''
                  and p.breed = t.id
                  and p.coat_color = c.id
                  order by p.create_time desc `;
-  console.log(191, resultSql)
-  const result = await conn.query(resultSql);
+  const result = await conn.query(resultSql, [resultRegIds]);
   return result ;
  }
+
+exports.findBindPetOpenIds =  async (petRegIds)=>{
+    if (petRegIds.length > 0) {
+        const sql = `select * from wx_pub_petInf_rel wf where wf.pet_reg_id in (?)`;
+        const result = await conn.query(sql, [petRegIds]);
+        return result;
+    }else{
+        return [[]];
+    }
+}
+
+exports.judePetExists = async(id)=>{
+ const sql = `select id from pet_register_info where id = ? `;
+ const result =  await conn.query(sql, [id]);
+ return result[0].length > 0;
+}
+
+exports.directBindDogRegNum = async (openid, unionId, petRegId, dogRegNum) => {
+    const wx_pet_ref_sql = ' insert into wx_pub_petInf_rel set ? ';
+    const wxPubPetInfRel = {
+         unionId: unionId,
+         pet_reg_id: petRegId,
+         openId: openid,
+         dog_reg_num: dogRegNum
+     }
+    return await conn.query(wx_pet_ref_sql, wxPubPetInfRel); 
+}
+exports.petRegIdPay = async (id) => {
+    const sql = `select id,pay_type from pet_register_info where id = ? `;
+    const result = await conn.query(sql, [id]);
+    return result;
+}
+
+exports.findTest = async()=>{
+    const ids = ['b3bc6e3dbb2a420aa8d569d70283e4ed', '6fa0671fd75d418398b5ab4a35bfe21d']
+    const sql = `select id,pay_type from pet_register_info where id in  (?)`;
+    const result = await conn.query(sql, [ids]);
+    return result[0];
+
+}

@@ -211,6 +211,13 @@ router.post('/addDogRegNum', async (req, res) => {
      const unionId = req.body.unionid;
      const dogRegNum = req.body.dogRegNum;
      const dogRegId = req.body.petRegId;
+     const idNumber = req.body.idNumber;
+     if (!regIdCard.test(idNumber)) {
+      throw {
+        respCode: '0001',
+        respMsg: " lost idNumber"
+      }
+     }
      const bindWxUserInfo = await service.isWxPubBind(unionId, opendId);
      if (bindWxUserInfo[0].length == 0) {
        throw {
@@ -236,6 +243,20 @@ router.post('/addDogRegNum', async (req, res) => {
           respMsg: " petRegId is not null !"
         }
       }
+      const judePetExists = await service.judePetExists(dogRegId);
+      if (!judePetExists) {
+        throw {
+          status: 10011,
+          respMsg: " the dog not exists !"
+        }
+      }
+     const ispaid = await service.petRegIdPay(dogRegId);
+     if (!(ispaid[0] && ispaid[0].pay_type != -1)) {
+        throw {
+          status: 10011,
+          respMsg: "该号码未付款！"
+        }
+     }
      const flag = await service.isBinwxRef(dogRegNum, dogRegId, opendId, unionId);
      if (flag) {
        throw {
@@ -243,7 +264,7 @@ router.post('/addDogRegNum', async (req, res) => {
          respMsg: " you have bind this dog regsiter number !"
        }
      }
-     const result = await service.eiditDogRegNum(dogRegNum, dogRegId, opendId, unionId);
+     const result = await service.eiditDogRegNum(dogRegNum, dogRegId, opendId, unionId, idNumber);
      res.json({
         status:200,
         respMsg: "bind success !"
@@ -314,11 +335,12 @@ router.post('/findPetInfosByIdNum',async(req,res)=>{
      }
   }
  const result = await service.findPetInfosByIdNum(idNumber, realName, contactPhone);
- let petRegInfo = [];
+ let petRegInfo = [],bindPetOpenIds = [[]];
  if (result[0].length > 0) {
    petRegInfo = result[0].map(obj => {
      let checkStatus = obj.audit_status;
      return {
+       "petType": obj.petType,
        "payType": obj.pay_type,
        "petColor": obj.petColor,
        "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
@@ -337,35 +359,40 @@ router.post('/findPetInfosByIdNum',async(req,res)=>{
        "contactPhone": obj.contact_phone || ''
      }
    })
+   let petRegIdsforQuery = petRegInfo.map(obj => obj.petRegId);
+   bindPetOpenIds = await service.findBindPetOpenIds(petRegIdsforQuery);
  }
+ console.log(351, bindPetOpenIds)
  res.json({
    status: 200,
-   result: petRegInfo
+   result: petRegInfo,
+   bindPetOpenIds:bindPetOpenIds[0]
  });
 });
-
+//查询自己创建的绑定的和绑定他人的
 router.post('/queryRegList', async (req, res) => {
   const opendId = req.body.openid;
   const unionId = req.body.unionid;
-  const idNumber = req.body.idNumber;
   if (!opendId || !unionId) {
       throw {
         respCode: '0001',
         respMsg: " lost params"
       }
   }
-  if (!regIdCard.test(idNumber)) {
+  const bindWxUserInfo = await service.isWxPubBind(unionId, opendId);
+  if (bindWxUserInfo[0].length == 0) {
     throw {
-      respCode: '0001',
-      respMsg: " lost idNumber"
+      status: 10010,
+      respMsg: " to bind wxpulic !"
     }
   }
-  const result = await service.queryRegList(openIds, unionId, idNumber);
+  const result = await service.queryRegList(opendId, unionId);
   let petRegInfo = [];
   if (result[0].length > 0) {
     petRegInfo = result[0].map(obj => {
       let checkStatus = obj.audit_status;
       return {
+        "petType": obj.petType,
         "payType": obj.pay_type,
         "petColor": obj.petColor,
         "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
@@ -388,6 +415,59 @@ router.post('/queryRegList', async (req, res) => {
   res.json({
     status: 200,
     result: petRegInfo
+  });
+});
+
+router.post('/directBindDogRegNum', async (req, res) => {
+ const opendId = req.body.openid;
+ const unionId = req.body.unionid;
+ const dogRegId = req.body.petRegId;
+ const dogRegNum = req.body.dogRegNum;
+ if (!opendId || !unionId) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost params"
+    }
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, opendId);
+  if (bindWxUserInfo[0].length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  if (!dogRegNum) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost dogRegNum"
+    }
+  }
+ const flag = await service.isBinwxRef(dogRegNum, dogRegId, opendId, unionId);
+ if (flag) {
+   throw {
+     status: 10011,
+     respMsg: " 已绑定过该号码，请勿重复绑定 !"
+   }
+ }
+ const judePetExists = await service.judePetExists(dogRegId);
+ if (!judePetExists) {
+    throw {
+      status: 10011,
+      respMsg: " the dog not exists !"
+    }
+ }
+ const result = await service.directBindDogRegNum(opendId, unionId, dogRegId, dogRegNum);
+  res.json({
+       status: 200,
+       respMsg: "bind success !"
+  });
+});
+
+router.post('/findTest', async (req, res) => {
+  const result = await service.findTest();
+  res.json({
+    status: 200,
+    result
   });
 });
 module.exports = router;
