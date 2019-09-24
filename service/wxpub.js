@@ -1,5 +1,5 @@
 const config = require('../config/config').wxpublic;
-const conn = require('../conn/conn')();
+const conn = require('../conn/conn');
 const WechatApi = require('co-wechat-api');
 const wxApi = new WechatApi(config.appid, config.appsecret);
 const moment = require('moment');
@@ -7,7 +7,7 @@ const moment = require('moment');
  * 处理公众号关注与取消关注事件
  */
 exports.wxPubEvent = async (message) => {
-    console.log(10,message)
+    console.log(10, message)
     const wxpubOpenId = message.FromUserName;
     //根据不同事件类型，分别处理
     switch (message.Event) {
@@ -17,10 +17,10 @@ exports.wxPubEvent = async (message) => {
             console.log("微信用户信息:", resUserInfo)
             const wxpetUnionId = resUserInfo && resUserInfo.unionid || '';
             const flagFocusPub = await isFocusWxPub(wxpetUnionId, wxpubOpenId);
-            if (flagFocusPub[0].length == 0) {
-              await addWxPub(wxpubOpenId, wxpetUnionId);
-            }else{
-              await updateWxpub(wxpubOpenId, wxpetUnionId);
+            if (flagFocusPub.length == 0) {
+                await addWxPub(wxpubOpenId, wxpetUnionId);
+            } else {
+                await updateWxpub(wxpubOpenId, wxpetUnionId);
             }
             return resUserInfo.nickname + '，欢迎关注 宠物登记信息!';
         case 'unsubscribe': //取消关注事件  
@@ -36,7 +36,7 @@ exports.wxPubEvent = async (message) => {
 /**
  * 判断是否关注宠物公众号
  */
- async function isFocusWxPub(unionId, openId){
+async function isFocusWxPub(unionId, openId) {
     const sql = `select * from wx_pub where unionId = '${unionId}' or openId = '${openId}'  `;
     const result = await conn.query(sql);
     return result;
@@ -48,7 +48,7 @@ exports.wxPubEvent = async (message) => {
 async function updateWxpub(openId, unionId) {
     const updateTime = moment().format('YYYY-MM-DD HH:mm:ss');
     const sql = `update wx_pub set unionId = '${unionId}',update_time = '${updateTime}'  where openId = '${openId}' `;
-    console.log(113,sql)
+    console.log(113, sql)
     return await conn.query(sql);
 }
 
@@ -62,7 +62,7 @@ async function addWxPub(openId, unionId) {
         openId: openId,
         unionId: unionId,
         create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
-        update_time:''
+        update_time: ''
     }
     return await conn.query(sql, petMaseterModel);
 }

@@ -1,4 +1,4 @@
-const conn = require('../conn/conn')();
+const conn = require('../conn/conn');
 const moment = require('moment');
 
 exports.findPetColor = async () => {
@@ -74,18 +74,13 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
     };
     return await conn.query(sql, petPreventionModel);
 }
-/**
- * 1.先添加证
- * 2.根据身份证查
- */
+
 exports.queryRegStatu = async (openId) => {
-    const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
+    const sql = `select p.pay_type, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+                 from  pet_register_info p,sys_area s,pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
-                 and p.breed = t.id
-                 and p.coat_color = c.id
                  order by p.create_time desc `;
     return await conn.query(sql);
 }
@@ -103,13 +98,11 @@ exports.findPetColor = async () => {
 function addyear() {
     return moment().add(1, 'y').format('YYYYMMDDHHmmss');
 }
-
 exports.isWxPubBind = async (unionId, openId) => {
     const sql = `select * from wx_pub where unionId = '${unionId}' or openId = '${openId}' `;
     const result = await conn.query(sql);
     return result;
 }
-
 exports.eiditDogRegNum = async (dogRegNum, dogRegId, creatorId, unionId, idNumber) => {
     const wx_pet_ref_sql = ' insert into wx_pub_petInf_rel set ? ';
     const wx_pub_sql = ` update pet_register_info set dog_reg_num = ? where id =? and dog_reg_num = '' `;
@@ -129,17 +122,16 @@ exports.eiditDogRegNum = async (dogRegNum, dogRegId, creatorId, unionId, idNumbe
 exports.isBinwxRef = async (dogRegNum, dogRegId, creatorId, unionId) => {
     const sql = ` select id from  wx_pub_petInf_rel where  dog_reg_num = ? and pet_reg_id = ? and openId = ? and unionId = ? `;
     const result = await conn.query(sql, [dogRegNum, dogRegId, creatorId, unionId]);
-    return result[0].length > 0;
+    return result.length > 0;
 }
-
-//查询没有绑定狗证的且付款的注册
+//查询没有绑定狗证的且未付款的注册
 exports.findNotBindRegIdsByOpenId = async (openId) => {
     const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = ?
-                 and p.pay_type <> -1
+                 and p.pay_type <> -1
                  and p.pet_state =1
                  and p.dog_reg_num = ''
                  and p.breed = t.id
@@ -148,92 +140,84 @@ exports.findNotBindRegIdsByOpenId = async (openId) => {
     const result = await conn.query(sql, [openId]);
     return result;
 }
-
-//证件号没有被绑定过,没被实用过
+//证件号没有被绑定过,没被实用过
 exports.findNotHasBindDogRegNum = async (dogRegNum) => {
     const sql = ` select dog_reg_num from pet_register_info where  dog_reg_num = ? `;
     const result = await conn.query(sql, [dogRegNum]);
     return result;
 }
-
 exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
-    const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
-                where 
-                p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
-                and p.pay_type <> -1
-                and p.pet_state = 1
-                and m.id_number = ?
-                and m.real_name = ?
-                and m.contact_phone = ?
-                and p.breed = t.id
-                and p.coat_color = c.id
-                order by p.create_time desc `;
-    const result = await conn.query(sql, [idNumber, realName, contactPhone]);
+    const sql = `select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url
+              from  pet_register_info p,sys_area s,pet_master m
+              where
+              p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+              and p.pet_state > 0
+              and p.audit_status = 1
+              and m.id_number = '${idNumber}'
+              and m.real_name = '${realName}'
+              and m.contact_phone ='${contactPhone}'
+              order by p.create_time desc `;
+    const result = await conn.query(sql);
     return result;
 }
-
-/**
- * 查询微信已绑定狗证的
- */
- exports.queryRegList = async (openId, unionId) => {
-  const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openId, unionId]);
-  const wxPubRegIds = wxPubRegIdsResult[0].map(obj => obj.pet_reg_id && obj.pet_reg_id);
-  const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where creator_id = ? and pay_type <> -1`, [openId]);
-  const petRegInfoIds = petRegInfoIdsResult[0].map(obj => obj.id);
-  const resultRegIds = Array.from(new Set(wxPubRegIds.concat(petRegInfoIds)));
-  if (resultRegIds.length == 0){
-      return [[]];
-  }
-  const resultSql = ` select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
+exports.queryRegList = async (openId, unionId) => {
+    const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openId, unionId]);
+    const wxPubRegIds = wxPubRegIdsResult.map(obj => obj.pet_reg_id && obj.pet_reg_id);
+    const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where creator_id = ? and pay_type <> -1 `, [openId]);
+    const petRegInfoIds = petRegInfoIdsResult.map(obj => obj.id);
+    const resultRegIds = Array.from(new Set(wxPubRegIds.concat(petRegInfoIds)));
+    console.log(169, resultRegIds);
+    if (resultRegIds.length == 0) {
+        return [];
+    }
+    const resultSql = ` select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+                 from  pet_register_info p,sys_area s,pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.id in (?)
                  and p.dog_reg_num <> ''
-                 and p.breed = t.id
-                 and p.coat_color = c.id
                  order by p.create_time desc `;
-  const result = await conn.query(resultSql, [resultRegIds]);
-  return result ;
- }
-
-exports.findBindPetOpenIds =  async (petRegIds)=>{
+    const result = await conn.query(resultSql, [resultRegIds]);
+    return result;
+}
+exports.findBindPetOpenIds = async (petRegIds) => {
     if (petRegIds.length > 0) {
         const sql = `select * from wx_pub_petInf_rel wf where wf.pet_reg_id in (?)`;
         const result = await conn.query(sql, [petRegIds]);
         return result;
-    }else{
-        return [[]];
+    } else {
+        return [];
     }
 }
-
-exports.judePetExists = async(id)=>{
- const sql = `select id from pet_register_info where id = ? `;
- const result =  await conn.query(sql, [id]);
- return result[0].length > 0;
+exports.judePetExists = async (id) => {
+    const sql = `select id from pet_register_info where id = ? `;
+    const result = await conn.query(sql, [id]);
+    return result.length > 0;
 }
 
 exports.directBindDogRegNum = async (openid, unionId, petRegId, dogRegNum) => {
     const wx_pet_ref_sql = ' insert into wx_pub_petInf_rel set ? ';
     const wxPubPetInfRel = {
-         unionId: unionId,
-         pet_reg_id: petRegId,
-         openId: openid,
-         dog_reg_num: dogRegNum
-     }
-    return await conn.query(wx_pet_ref_sql, wxPubPetInfRel); 
+        unionId: unionId,
+        pet_reg_id: petRegId,
+        openId: openid,
+        dog_reg_num: dogRegNum,
+    }
+    return await conn.query(wx_pet_ref_sql, wxPubPetInfRel);
 }
+
 exports.petRegIdPay = async (id) => {
     const sql = `select id,pay_type from pet_register_info where id = ? `;
     const result = await conn.query(sql, [id]);
     return result;
 }
+exports.findAllArea = async () => {
+    const sql = `select * from sys_area where parent_code = '130401' `;
+    return await conn.query(sql);
+}
 
-exports.findTest = async()=>{
-    const ids = ['b3bc6e3dbb2a420aa8d569d70283e4ed', '6fa0671fd75d418398b5ab4a35bfe21d']
-    const sql = `select id,pay_type from pet_register_info where id in  (?)`;
-    const result = await conn.query(sql, [ids]);
-    return result[0];
-
+exports.judeWxUserIsBindPet = async (openId, unionId, petRegId) => {
+    const sql = `select * from wx_pub_petInf_rel where openId = ? and unionId = ?  and pet_reg_id = ? `;
+    const result = await conn.query(sql, [openId, unionId, petRegId]);
+    return result;
 }

@@ -19,14 +19,6 @@ app.use(express.urlencoded({
 }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-const sessionStore = new MySQLStore(config.mysql);
-app.use(session({
-  key: 'fhfdffdjfjiejfdjfjdjffdfdfdfdfd',
-  secret: 'sjdsjidfjdkfwererecxrerererfjxx',
-  store: sessionStore,
-  resave: false,
-  saveUninitialized: false
-}))
 app.use(bodyParser.urlencoded({
   limit: '100mb',
   extended: false
