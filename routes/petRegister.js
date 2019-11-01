@@ -6,7 +6,9 @@ const uuidTool = require('uuid/v4');
 const axios = require('axios');
 const regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
 const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
+const regDogRegNum = /^\d{6}$/;
 const moment = require('moment');
+const imgHttp = 'https://api.hbzner.com/dog';
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, '/home/manage_sys/app/public/images')
@@ -77,6 +79,12 @@ router.post('/addpetRegist', async (req, res, next) => {
     }
   }
   if (params.dogRegNum) {
+    if (!regDogRegNum.test(params.dogRegNum)) {
+      throw {
+        respCode: '0001',
+        respMsg: " dogRegNum not  correct!"
+      }
+    }
     const result = await service.judgedogRegNum(dogRegNum);
     if (result && result.length > 0) {
       throw {
@@ -85,38 +93,6 @@ router.post('/addpetRegist', async (req, res, next) => {
       }
     }
   }
-  /*
-   if (!params.petName) {
-     throw {
-       status: '0001',
-       respMsg: " lost petName"
-     }
-   }
-   if (!params.gender) {
-     throw {
-       status: '0001',
-       respMsg: " lost gender"
-     }
-   }
-   if (!params.breed) {
-     throw {
-       status: '0001',
-       respMsg: " lost breed"
-     }
-   }
-   if (!params.coatColor) {
-     throw {
-       status: '0001',
-       respMsg: " lost coatColor"
-     }
-   }
-   if (!params.birthday) {
-     throw {
-       status: '0001',
-       respMsg: " lost birthday"
-     }
-   }
-  */
   if (!params.realName) {
     throw {
       respCode: '0001',
@@ -127,6 +103,14 @@ router.post('/addpetRegist', async (req, res, next) => {
     throw {
       respCode: '0001',
       respMsg: " lost idNumber"
+    }
+  }
+  //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
+  const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
+  if (hasUserBindSysInfo.length > 0) {
+    throw {
+      respCode: '0001',
+      respMsg: "每个人只能申请一条犬证信息！"
     }
   }
   if (!regPhoneNum.test(params.contactPhone)) {
@@ -170,10 +154,12 @@ router.post('/wxLogin', async (req, res, next) => {
   }
   const bindWxUserInfo = await service.isWxPubBind(data.unionid, data.openid);
   if (bindWxUserInfo.length == 0) {
-    throw {
+    res.json({
       status: 10010,
+      data,
       respMsg: " to bind wxpulic !"
-    }
+    })
+    return;
   }
   res.json({
     data
@@ -200,7 +186,7 @@ router.post('/queryRegStatu', async (req, res) => {
         "petState": obj.pet_state,
         "renewTime": obj.renew_time ? moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss') : '',
         "createTime": moment(obj.create_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
-        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', 'http://192.168.50.111:7001') || '',
+        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', imgHttp) || '',
         "masterName": obj.real_name || '',
         "masterAdress": obj.residential_address || '',
         "contactPhone": obj.contact_phone || ''
@@ -265,6 +251,12 @@ router.post('/addDogRegNum', async (req, res) => {
       respMsg: " dogRegNum is not null !"
     }
   }
+  if (!regDogRegNum.test(dogRegNum)) {
+    throw {
+      respCode: '0001',
+      respMsg: " dogRegNum not  correct!"
+    }
+  }
   if (!dogRegId) {
     throw {
       status: 10011,
@@ -321,6 +313,12 @@ router.post('/findNotBindRegIdsByOpenId', async (req, res) => {
       respMsg: " dogRegNum is not null !"
     }
   }
+  if (!regDogRegNum.test(dogRegNum)) {
+    throw {
+      respCode: '0001',
+      respMsg: " dogRegNum not  correct!"
+    }
+  }
   if (!dogRegId) {
     throw {
       status: 10011,
@@ -354,6 +352,12 @@ router.post('/findNotHasBindDogRegNum', async (req, res) => {
     throw {
       respCode: '0001',
       respMsg: " lost dogRegNum"
+    }
+  }
+  if (!regDogRegNum.test(dogRegNum)) {
+    throw {
+      respCode: '0001',
+      respMsg: " dogRegNum not  correct!"
     }
   }
   const result = await service.findNotHasBindDogRegNum(dogRegNum);
@@ -409,7 +413,7 @@ router.post('/findPetInfosByIdNum', async (req, res) => {
         "petState": obj.pet_state,
         "renewTime": obj.renew_time ? moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss') : '',
         "createTime": moment(obj.create_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
-        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', 'http://192.168.50.111:7001') || '',
+        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', imgHttp) || '',
         "masterName": obj.real_name || '',
         "masterAdress": obj.residential_address || '',
         "contactPhone": obj.contact_phone || ''
@@ -457,7 +461,7 @@ router.post('/queryRegList', async (req, res) => {
         "petState": obj.pet_state,
         "renewTime": obj.renew_time ? moment(obj.renew_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss') : '',
         "createTime": moment(obj.create_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD HH:mm:ss'),
-        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', 'http://192.168.50.111:7001') || '',
+        "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', imgHttp) || '',
         "masterName": obj.real_name || '',
         "masterAdress": obj.residential_address || '',
         "contactPhone": obj.contact_phone || ''
@@ -493,6 +497,12 @@ router.post('/directBindDogRegNum', async (req, res) => {
       respMsg: " lost dogRegNum"
     }
   }
+  if (!regDogRegNum.test(dogRegNum)) {
+    throw {
+      respCode: '0001',
+      respMsg: " dogRegNum not  correct!"
+    }
+  }
   const flag = await service.isBinwxRef(dogRegNum, dogRegId, openId, unionId);
   if (flag) {
     throw {
@@ -520,4 +530,5 @@ router.post('/findAllArea', async (req, res, next) => {
     result: result
   })
 })
+
 module.exports = router;

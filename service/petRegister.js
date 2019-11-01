@@ -25,7 +25,8 @@ exports.addPetMaster = async (creatorId, uuid, options) => {
         update_time: moment().format('YYYYMMDDHHmmss'),
         id_number_pic1: options.idNumberPic1 || '',
         id_number_pic2: options.idNumberPic2 || '',
-        residence_permit_pic: options.residencePermitPic || ''
+        residence_permit_pic: options.residencePermitPic || '',
+        residence_permit_pic2: options.residencePermitPic2 || ''
     }
     return await conn.query(sql, petMaseterModel);
 }
@@ -69,6 +70,7 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
         pet_reg_id: petRegId,
         creator_id: creatorId || '',
         photo_url: options.photoUrl || '',
+        photo_url2: options.photoUrl2 || '',
         create_time: moment().format('YYYYMMDDHHmmss') || '',
         update_time: moment().format('YYYYMMDDHHmmss') || ''
     };
@@ -77,7 +79,7 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 
 exports.queryRegStatu = async (openId) => {
     const sql = `select p.pay_type, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_area s,pet_master m
+                 from  pet_register_info p,sys_branch s,pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
@@ -127,7 +129,7 @@ exports.isBinwxRef = async (dogRegNum, dogRegId, creatorId, unionId) => {
 //查询没有绑定狗证的且未付款的注册
 exports.findNotBindRegIdsByOpenId = async (openId) => {
     const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_area s,pet_master m, pet_type t,pet_color c
+                 from  pet_register_info p,sys_branch s,pet_master m, pet_type t,pet_color c
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = ?
@@ -148,7 +150,7 @@ exports.findNotHasBindDogRegNum = async (dogRegNum) => {
 }
 exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
     const sql = `select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url
-              from  pet_register_info p,sys_area s,pet_master m
+              from  pet_register_info p,sys_branch s,pet_master m
               where
               p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
               and p.pet_state > 0
@@ -171,7 +173,7 @@ exports.queryRegList = async (openId, unionId) => {
         return [];
     }
     const resultSql = ` select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_area s,pet_master m
+                 from  pet_register_info p,sys_branch s,pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.id in (?)
@@ -212,12 +214,18 @@ exports.petRegIdPay = async (id) => {
     return result;
 }
 exports.findAllArea = async () => {
-    const sql = `select * from sys_area where parent_code = '130401' `;
+    const sql = `select * from sys_branch `;// where parent_code = '130401'
     return await conn.query(sql);
 }
 
 exports.judeWxUserIsBindPet = async (openId, unionId, petRegId) => {
     const sql = `select * from wx_pub_petInf_rel where openId = ? and unionId = ?  and pet_reg_id = ? `;
     const result = await conn.query(sql, [openId, unionId, petRegId]);
+    return result;
+}
+
+exports.hasUserBindSysInfo = async (idNumber) => {
+    const sql = `select id from pet_master where id_number = ? `;
+    const result = await conn.query(sql, [idNumber]);
     return result;
 }
