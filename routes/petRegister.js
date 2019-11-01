@@ -8,7 +8,7 @@ const regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
 const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
 const regDogRegNum = /^\d{6}$/;
 const moment = require('moment');
-const imgHttp = 'https://api.hbzner.com/dog';
+const imgHttp = 'http://192.168.50.111:7001' //'https://api.hbzner.com/dog';
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, '/home/manage_sys/app/public/images')
@@ -174,6 +174,7 @@ router.post('/queryRegStatu', async (req, res) => {
       let checkStatus = obj.audit_status;
       return {
         "payType": obj.pay_type,
+        "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
         "petColor": obj.coat_color,
         "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
         "petType": obj.breed,
