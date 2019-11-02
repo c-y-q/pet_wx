@@ -8,6 +8,11 @@ const regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
 const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
 const regDogRegNum = /^\d{6}$/;
 const moment = require('moment');
+const {
+  cache,
+  reqCount,
+  expireTime
+} = require('../conn/redis');
 const imgHttp = 'http://192.168.50.111:7001' //'https://api.hbzner.com/dog';
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -46,6 +51,20 @@ router.post('/addpetRegist', async (req, res, next) => {
       status: '0001',
       respMsg: '缺失unionid！'
     }
+  }
+  let cacheKey = `petwx_${params.openid}`;
+  const cacheWxResCount = await cache.get(cacheKey);
+  //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
+  if (!cacheWxResCount) {
+    cache.set(cacheKey, 1, 'EX', expireTime);
+  } else {
+    if (cacheWxResCount > reqCount) {
+      throw {
+        status: '0001',
+        respMsg: "请勿频繁提交!"
+      }
+    }
+    cache.incr(cacheKey);
   }
   const bindWxUserInfo = await service.isWxPubBind(params.unionid, params.openid);
   if (bindWxUserInfo.length == 0) {
@@ -143,6 +162,7 @@ router.post('/wxLogin', async (req, res, next) => {
   if (data.errcode) {
     throw {
       status: 403,
+      data,
       respMsg: 'code 非法！'
     }
   }

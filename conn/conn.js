@@ -10,14 +10,16 @@ module.exports = {
       poolCluster.add(`"${node}"`, config.mysql[`${node}`]);
     }
     return new Promise((resolve, reject) => {
-      poolCluster.getConnection(function(err, connection) {
+      poolCluster.getConnection(function (err, connection) {
         if (err) {
           reject(err);
         } else {
-          connection.query(sql, options, function(error, results, fields) {
+          connection.query(sql, options, function (error, results, fields) {
             if (error) {
               reject(error);
             } else {
+              //pool.releaseConnection(conn)，在mysql中生效,mysql2中，connection.release();该方法太坑，不生效,总是报错链接过多
+              poolCluster.end();
               resolve(results);
             }
           });
