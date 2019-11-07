@@ -4,16 +4,35 @@ const service = require('../service/petRegister');
 const multer = require('multer');
 const uuidTool = require('uuid/v4');
 const axios = require('axios');
-const regIdCard = /(^\d{15}$)|(^\d{18}$)|(^\d{17}(\d|X|x)$)/;
+
+function regIdCard(idcode) {
+  const weight_factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
+  const check_code = ['1', '0', 'X', '9', '8', '7', '6', '5', '4', '3', '2'];
+  const code = idcode + "";
+  let last = idcode[17]; //最后一位
+  const seventeen = code.substring(0, 17);
+  const arr = seventeen.split("");
+  const len = arr.length;
+  let num = 0;
+  for (let i = 0; i < len; i++) {
+    num = num + arr[i] * weight_factor[i];
+  }
+  const resisue = num % 11;
+  const last_no = check_code[resisue];
+  const idcard_patter = /^[1-9][0-9]{5}([1][9][0-9]{2}|[2][0][0|1][0-9])([0][1-9]|[1][0|1|2])([0][1-9]|[1|2][0-9]|[3][0|1])[0-9]{3}([0-9]|[X])$/;
+  const format = idcard_patter.test(idcode);
+  return last === last_no && format ? true : false;
+}
+
 const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
 const regDogRegNum = /^\d{6}$/;
 const moment = require('moment');
+const imgHttp = 'https://api.hbzner.com/dog';
 const {
   cache,
   reqCount,
   expireTime
 } = require('../conn/redis');
-const imgHttp = 'http://192.168.50.111:7001' //'https://api.hbzner.com/dog';
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, '/home/manage_sys/app/public/images')
@@ -118,7 +137,7 @@ router.post('/addpetRegist', async (req, res, next) => {
       respMsg: " lost realName"
     }
   }
-  if (!regIdCard.test(params.idNumber)) {
+  if (!regIdCard(params.idNumber)) {
     throw {
       respCode: '0001',
       respMsg: " lost idNumber"
@@ -247,7 +266,7 @@ router.post('/addDogRegNum', async (req, res) => {
   const dogRegNum = req.body.dogRegNum;
   const dogRegId = req.body.petRegId;
   const idNumber = req.body.idNumber;
-  if (!regIdCard.test(idNumber)) {
+  if (!regIdCard(idNumber)) {
     throw {
       respCode: '0001',
       respMsg: " lost idNumber"
@@ -393,7 +412,7 @@ router.post('/findPetInfosByIdNum', async (req, res) => {
   const contactPhone = req.body.contactPhone;
   const openId = req.body.openid;
   const unionId = req.body.unionid;
-  if (!regIdCard.test(idNumber)) {
+  if (!regIdCard(idNumber)) {
     throw {
       respCode: '0001',
       respMsg: " lost idNumber"
