@@ -7,12 +7,12 @@ exports.findPetColor = async () => {
 }
 
 exports.judgedogRegNum = async (dogRegNum) => {
-    const sql = `select * from  pet_register_info where dog_reg_num = '${dogRegNum}' `;
+    const sql = `select * from  wx_pet_register_info where dog_reg_num = '${dogRegNum}' `;
     return await conn.query(sql);
 }
 
 exports.addPetMaster = async (creatorId, uuid, options) => {
-    const sql = `insert into pet_master set ? `;
+    const sql = `insert into wx_pet_master set ? `;
     const petMaseterModel = {
         id: uuid,
         real_name: options.realName || '',
@@ -32,7 +32,7 @@ exports.addPetMaster = async (creatorId, uuid, options) => {
 }
 
 exports.addPetregister = async (creatorId, petRegId, uuid, options) => {
-    const sql = `insert into pet_register_info set ? `;
+    const sql = `insert into wx_pet_register_info set ? `;
     const petRegModel = {
         id: petRegId,
         pet_name: options.petName || '',
@@ -59,12 +59,21 @@ exports.addPetregister = async (creatorId, petRegId, uuid, options) => {
         logout_time: '',
         create_time: moment().format('YYYYMMDDHHmmss'),
         update_time: moment().format('YYYYMMDDHHmmss'),
+        receive: parseInt(options.receive || 0),
+        receive_name: options.receiveName || '',
+        courier_number: options.courierNumber || '',
+        receive_phone: options.receivePhone || '',
+        receive_addr: options.receiveAddr || '',
+        deliver: parseInt(options.deliver || 0),
+        audit_time: options.auditTime || '',
+        deliver_time: options.deliverTime || ''
+
     }
     return await conn.query(sql, petRegModel);
 }
 
 exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
-    const sql = `insert into pet_prevention_img set ? `;
+    const sql = `insert into wx_pet_prevention_img set ? `;
     const petPreventionModel = {
         year: moment().format('YYYY'),
         pet_reg_id: petRegId,
@@ -79,7 +88,7 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 
 exports.queryRegStatu = async (openId) => {
     const sql = `select p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_branch s,pet_master m
+                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
@@ -107,7 +116,7 @@ exports.isWxPubBind = async (unionId, openId) => {
 }
 exports.eiditDogRegNum = async (dogRegNum, dogRegId, creatorId, unionId, idNumber) => {
     const wx_pet_ref_sql = ' insert into wx_pub_petInf_rel set ? ';
-    const wx_pub_sql = ` update pet_register_info set dog_reg_num = ? where id =? and dog_reg_num = '' `;
+    const wx_pub_sql = ` update wx_pet_register_info set dog_reg_num = ? where id =? and dog_reg_num = '' `;
     const wxPubPetInfRel = {
         unionId: unionId,
         pet_reg_id: dogRegId,
@@ -129,7 +138,7 @@ exports.isBinwxRef = async (dogRegNum, dogRegId, creatorId, unionId) => {
 //查询没有绑定狗证的且未付款的注册
 exports.findNotBindRegIdsByOpenId = async (openId) => {
     const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_branch s,pet_master m, pet_type t,pet_color c
+                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m, pet_type t,pet_color c
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = ?
@@ -144,13 +153,13 @@ exports.findNotBindRegIdsByOpenId = async (openId) => {
 }
 //证件号没有被绑定过,没被实用过
 exports.findNotHasBindDogRegNum = async (dogRegNum) => {
-    const sql = ` select dog_reg_num from pet_register_info where  dog_reg_num = ? `;
+    const sql = ` select dog_reg_num from wx_pet_register_info where  dog_reg_num = ? `;
     const result = await conn.query(sql, [dogRegNum]);
     return result;
 }
 exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
     const sql = `select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url
-              from  pet_register_info p,sys_branch s,pet_master m
+              from  wx_pet_register_info p,sys_branch s,wx_pet_master m
               where
               p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
               and p.pet_state > 0
@@ -165,7 +174,7 @@ exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
 exports.queryRegList = async (openId, unionId) => {
     const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openId, unionId]);
     const wxPubRegIds = wxPubRegIdsResult.map(obj => obj.pet_reg_id && obj.pet_reg_id);
-    const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where creator_id = ? and pay_type <> -1 `, [openId]);
+    const petRegInfoIdsResult = await conn.query(`select id from wx_pet_register_info where creator_id = ? and pay_type <> -1 `, [openId]);
     const petRegInfoIds = petRegInfoIdsResult.map(obj => obj.id);
     const resultRegIds = Array.from(new Set(wxPubRegIds.concat(petRegInfoIds)));
     console.log(169, resultRegIds);
@@ -173,7 +182,7 @@ exports.queryRegList = async (openId, unionId) => {
         return [];
     }
     const resultSql = ` select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_branch s,pet_master m
+                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.id in (?)
@@ -192,7 +201,7 @@ exports.findBindPetOpenIds = async (petRegIds) => {
     }
 }
 exports.judePetExists = async (id) => {
-    const sql = `select id from pet_register_info where id = ? `;
+    const sql = `select id from wx_pet_register_info where id = ? `;
     const result = await conn.query(sql, [id]);
     return result.length > 0;
 }
@@ -209,12 +218,12 @@ exports.directBindDogRegNum = async (openid, unionId, petRegId, dogRegNum) => {
 }
 
 exports.petRegIdPay = async (id) => {
-    const sql = `select id,pay_type from pet_register_info where id = ? `;
+    const sql = `select id,pay_type from wx_pet_register_info where id = ? `;
     const result = await conn.query(sql, [id]);
     return result;
 }
 exports.findAllArea = async () => {
-    const sql = `select * from sys_branch  where parent_code = '130401' `;//
+    const sql = `select * from sys_branch  where parent_code = '130401' `; //
     return await conn.query(sql);
 }
 
@@ -225,7 +234,7 @@ exports.judeWxUserIsBindPet = async (openId, unionId, petRegId) => {
 }
 
 exports.hasUserBindSysInfo = async (idNumber) => {
-    const sql = `select id from pet_master where id_number = ? `;
+    const sql = `select id from wx_pet_master where id_number = ? `;
     const result = await conn.query(sql, [idNumber]);
     return result;
 }

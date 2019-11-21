@@ -70,5 +70,11 @@ module.exports = {
         //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
         expireTime: 60 * 3,
         reqCount: 1
+    },
+    pay: {
+        mid: "898340149000005",
+        merchantUserId: "898340149000005",
+        tid: "88880001",
+        Authorization: 'Authorization'
     }
 }
