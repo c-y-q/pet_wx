@@ -565,4 +565,5 @@ router.post('/findAllArea', async (req, res, next) => {
   })
 })
 
+
 module.exports = router;

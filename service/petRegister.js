@@ -238,3 +238,15 @@ exports.hasUserBindSysInfo = async (idNumber) => {
     const result = await conn.query(sql, [idNumber]);
     return result;
 }
+
+//年审
+exports.yearCheck = async (creatorId, petRegId, options) => {
+    const petRegSql = `update pet_register_info set pet_state = 3 where master_id = ? `;
+    const petRegPromise = conn.query(petRegSql, [creatorId]);
+
+    const petPrevSql = `update pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
+    const petPrevPromise = conn.query(petPrevSql, [options.year, options.photoUrl, options.photoUrl2, options.updateTime, petRegId]);
+
+    return await Promise.all([petRegPromise, petPrevPromise]);
+
+}

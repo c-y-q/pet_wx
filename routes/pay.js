@@ -226,4 +226,50 @@ router.post('/queryWxOrder', async (req, res) => {
         notPayOk
     })
 })
+
+/**
+ * 年审
+ */
+router.post('/yearCheck', async (req, res) => {
+    const openId = req.body.openid;
+    const unionId = req.body.unionid;
+    const petRegId = req.body.petRegId;
+    if (!openId || !unionId) {
+        throw {
+            respCode: '0001',
+            respMsg: " lost params"
+        }
+    }
+    const bindWxUserInfo = await registerService.isWxPubBind(unionId, openId);
+    if (bindWxUserInfo.length == 0) {
+        throw {
+            status: 10010,
+            respMsg: " to bind wxpulic !"
+        }
+    }
+    const options = {
+        year: req.body.year,
+        photoUrl: req.body.photoUrl,
+        photoUrl2: req.body.photoUrl2,
+        updateTime: moment().format('YYYYMMDDHHmmss')
+    }
+    await registerService.yearCheck(openId, petRegId, options);
+    //创建订单
+    const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${service.getMyUUId(5)}`;
+    const price = await service.queryPrice(2);
+    const orderModel = {
+        order_num: orderNum,
+        creator: openid,
+        order_status: 0,
+        create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
+        order_source: 2,
+        price: price[0] || 9999
+
+    }
+    await service.addWxOrder(orderModel);
+    res.json({
+        status: 200,
+        result: '提交年审信息成功,请前往订单列表支付'
+    })
+})
 module.exports = router;
