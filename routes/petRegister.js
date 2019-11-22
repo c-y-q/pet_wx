@@ -4,6 +4,7 @@ const service = require('../service/petRegister');
 const multer = require('multer');
 const uuidTool = require('uuid/v4');
 const axios = require('axios');
+const orderService = require('../service/pay');
 
 function regIdCard(idcode) {
   const weight_factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
@@ -156,6 +157,18 @@ router.post('/addpetRegist', async (req, res, next) => {
   const petRegId = uuidTool().replace(/-/gi, '');
   const addPetRegResult = await service.addPetregister(params.openid, petRegId, uuid, params);
   const addPetPreventionResult = await service.addPetPreventionInfo(params.openid, petRegId, params);
+  const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${service.getMyUUId(5)}`;
+  const price = await orderService.queryPrice(1);
+  const orderModel = {
+    order_num: orderNum,
+    creator: params.openid,
+    order_status: 0,
+    create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
+    order_source: 1,
+    price: price[0] || 9999
+
+  }
+  await service.addWxOrder(orderModel);
   res.json({
     status: 200,
     respMsg: '提交信息成功！'
