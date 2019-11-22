@@ -112,6 +112,7 @@ router.post('/wpPay', async (req, res) => {
 })
 
 router.post('/wpPayNotify', async (req, res) => {
+    //toDO:支付成功后，需要去修改regist_info中的pay_type为1，微信支付
     /*
      * 1.支付成功后的时间，即为首次登记时间
      */
@@ -264,7 +265,6 @@ router.post('/yearCheck', async (req, res) => {
         create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
         order_source: 2,
         price: price[0] || 9999
-
     }
     await service.addWxOrder(orderModel);
     res.json({

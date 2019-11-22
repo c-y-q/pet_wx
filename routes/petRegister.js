@@ -157,20 +157,24 @@ router.post('/addpetRegist', async (req, res, next) => {
   const petRegId = uuidTool().replace(/-/gi, '');
   const addPetRegResult = await service.addPetregister(params.openid, petRegId, uuid, params);
   const addPetPreventionResult = await service.addPetPreventionInfo(params.openid, petRegId, params);
-  const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${service.getMyUUId(5)}`;
+  const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   const price = await orderService.queryPrice(1);
+  const receive = parseInt(params.receive) || 0;
+  const totalPrice = receive == 1 ? price : receive == 2 ? price + 10 : 9999;
+  console.log(164, price, receive, totalPrice)
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
     order_status: 0,
     create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
     order_source: 1,
-    price: price[0] || 9999
+    price: totalPrice
 
   }
-  await service.addWxOrder(orderModel);
+  await orderService.addWxOrder(orderModel);
   res.json({
     status: 200,
+    orderNum,
     respMsg: '提交信息成功！'
   })
 })
@@ -220,12 +224,12 @@ router.post('/queryRegStatu', async (req, res) => {
       let checkStatus = obj.audit_status;
       return {
         "payType": obj.pay_type,
-        "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
+        // "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
         "petColor": obj.coat_color,
         "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
         "petType": obj.breed,
         "petRegId": obj.id,
-        "checkStatus": checkStatus == 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
+        "checkStatus": checkStatus, //== 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
         "auditRemarks": obj.audit_remarks,
         "areaName": obj.name || '',
         "dogRegNum": obj.dog_reg_num || 0,
@@ -236,7 +240,15 @@ router.post('/queryRegStatu', async (req, res) => {
         "petPhotoUrl": obj.pet_photo_url && obj.pet_photo_url.replace('/home/manage_sys/app', imgHttp) || '',
         "masterName": obj.real_name || '',
         "masterAdress": obj.residential_address || '',
-        "contactPhone": obj.contact_phone || ''
+        "contactPhone": obj.contact_phone || '',
+        receive: obj.receive,
+        receiveName: obj.receive_name || '',
+        courierNumber: obj.courier_number || '',
+        receivePhone: obj.receive_phone || '',
+        receiveAddr: obj.receive_addr || '',
+        checker: obj.checker || '',
+        deliver: obj.deliver,
+        auditType: obj.audit_type
       }
     })
   }
@@ -500,7 +512,7 @@ router.post('/queryRegList', async (req, res) => {
         "petColor": obj.coat_color,
         "petGender": obj.gender == 1 ? '雄' : obj.gender == 2 ? '雌' : '未知',
         "petRegId": obj.id,
-        "checkStatus": checkStatus == 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
+        "checkStatus": checkStatus, //== 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
         "auditRemarks": obj.audit_remarks,
         "areaName": obj.name || '',
         "dogRegNum": obj.dog_reg_num || '',

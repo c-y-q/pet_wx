@@ -35,7 +35,8 @@ exports.queryOrder = async (creatorId, orderNum) => {
 
 exports.queryPrice = async (code) => {
     const sql = `select data from sys_params where type = 'paymentType' and code = ? `;
-    return await conn.query(sql, [code]);
+    const result = await conn.query(sql, [code]);
+    return parseInt(result[0].data) || 0;
 }
 
 exports.queryRegInfoAuditStatus = async (creatorId) => {

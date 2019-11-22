@@ -64,7 +64,7 @@ exports.addPetregister = async (creatorId, petRegId, uuid, options) => {
         courier_number: options.courierNumber || '',
         receive_phone: options.receivePhone || '',
         receive_addr: options.receiveAddr || '',
-        deliver: parseInt(options.deliver || 0),
+        deliver: parseInt(options.deliver || 2),
         audit_time: options.auditTime || '',
         deliver_time: options.deliverTime || ''
 
@@ -87,11 +87,12 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 }
 
 exports.queryRegStatu = async (openId) => {
-    const sql = `select p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    const sql = `select p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
+                 and p.pay_type <> -1
                  order by p.create_time desc `;
     return await conn.query(sql);
 }
