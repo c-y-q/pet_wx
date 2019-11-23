@@ -1,6 +1,10 @@
 const conn = require('../conn/conn');
 const moment = require('moment');
+const imgHttp = 'http://192.168.50.111:7001';
 
+
+const replaceImgPath = '/home/manage_sys/app';
+//const imgHttp = 'https://api.hbzner.com/dog';
 exports.findPetColor = async () => {
     const sql = `select * from pet_color`;
     return await conn.query(sql);
@@ -251,4 +255,120 @@ exports.yearCheck = async (creatorId, petRegId, options) => {
 
     return await Promise.all([petRegPromise, petPrevPromise]);
 
+}
+
+exports.queryRegInfoByRegId = async (queryRegInfoByRegId) => {
+    const sql = ` SELECT 
+            r.audit_type,
+            r.receive,
+            IFNULL(r.courier_number, '') as courier_number,
+            IFNULL(r.courier_time, '') as courier_time,
+            IFNULL(r.receive_name, '') as receive_name ,
+            IFNULL(r.receive_phone, '') as receive_phone,
+            IFNULL(r.receive_addr, '') as receive_addr,
+            r.deliver,
+            IFNULL(r.audit_time, '') as audit_time,
+            IFNULL(r.deliver_time, '') as deliver_time,
+            IFNULL(r.receive_addr,'') as receive_addr,
+            IFNULL(r.id, '') as id,
+            IFNULL(r.pet_name, '') as pet_name,
+            IFNULL(r.gender, '') as gender,
+            IFNULL(r.pet_state, '') as pet_state,
+            IFNULL(r.pet_category_id, '') as pet_category_id,
+            IFNULL(r.breed, '') as breed,
+            IFNULL(r.coat_color, '') as coat_color,
+            IFNULL(r.birthday, '') as birthday,
+            IFNULL(r.area_code, '') as area_code,
+            IFNULL(r.dog_reg_num, '') as dog_reg_num,
+            IFNULL(r.epc_num, '') as epc_num,
+            IFNULL(DATE_FORMAT(r.first_reg_time,'%Y/%m/%d %H:%i:%s'), '') as first_reg_time,
+            IFNULL(DATE_FORMAT(r.renew_time, '%Y/%m/%d'), '') as renew_time,
+            IFNULL(DATE_FORMAT(r.change_time, '%Y/%m/%d %H:%i:%s'), '') as change_time,
+            IFNULL(DATE_FORMAT(r.logout_time, '%Y/%m/%d %H:%i:%s'), '') as logout_time,
+            IFNULL(r.submit_source, '') as submit_source,
+            IFNULL(r.audit_status, '') as checkStatus,
+            IFNULL(r.audit_remarks, '') as audit_remarks,
+            replace(r.pet_photo_url, '${replaceImgPath}', '${imgHttp}')  pet_photo_url,
+            IFNULL(r.create_time, '') as create_time,
+            IFNULL(DATE_FORMAT(r.create_time,'%Y/%m/%d %H:%i:%s'), '') as create_time,
+            IFNULL(DATE_FORMAT(r.update_time, ''), '') as update_time,
+            IFNULL(r.creator_id, '%Y/%m/%d %H:%i:%s') as creator_id,
+            replace(m.id_number_pic1, '${replaceImgPath}', '${imgHttp}')  id_number_pic1,
+            replace(m.id_number_pic2, '${replaceImgPath}', '${imgHttp}')  id_number_pic2,
+            replace(m.residence_permit_pic, '${replaceImgPath}', '${imgHttp}')  residence_permit_pic,
+            replace(m.residence_permit_pic2, '${replaceImgPath}', '${imgHttp}')  residence_permit_pic2,
+            IFNULL(m.real_name, '') as real_name,
+            IFNULL(m.id_number, '') as id_number,
+            IFNULL(m.residence_permit, '') as residence_permit,
+            IFNULL(m.contact_phone, '') as contact_phone,
+            IFNULL(m.residential_address, '') as residential_address,
+            IFNULL(r.master_id, '') as master_id,
+            replace(e.photo_url, '${replaceImgPath}', '${imgHttp}')  photo_url,
+            replace(e.photo_url2, '${replaceImgPath}', '${imgHttp}')  photo_url2,
+            IFNULL(e.pet_reg_id, '') as pet_reg_id,
+            IFNULL(s.name, '') as areaName
+            FROM
+                wx_pet_register_info r INNER JOIN wx_pet_master m ON r.master_id = m.id 
+                INNER JOIN wx_pet_prevention_img e ON r.id = e.pet_reg_id 
+                INNER JOIN sys_branch s on r.area_code = s.code 
+            where 
+                r.pay_type != -1  and  r.id = ?  `
+    const result = await conn.query(sql, [queryRegInfoByRegId]);
+    const res = result.length > 0 ? result.map(obj => this.toTuoFeng(obj)) : [];
+    return res;
+}
+
+exports.toTuoFeng = obj => {
+    const result = {};
+    for (let key in obj) {
+        let resutKey = key.replace(/\_[a-z]/g, val => val.toUpperCase().replace(/\_/g, ''));
+        result[resutKey] = obj[key];
+    }
+    return result;
+}
+
+exports.updatePetRegInfo = async (options) => {
+    const petMasterSql = `update wx_pet_master set real_name = ?,id_number = ?,residence_permit = ?,contact_phone = ?,residential_address = ?,
+                         update_time = ? ,id_number_pic1 = ?, id_number_pic1 = ?,
+                        id_number_pic2 = ?, residence_permit_pic = ?, residence_permit_pic2 = ?
+                        where creator_id = ?  `
+    const petMasterSqlUpdatePromise = conn.query(petMasterSql, [
+        options.realName,
+        options.idNumber,
+        options.residencePermit,
+        options.contactPhone,
+        options.residentialAddress,
+        moment().format('YYYYMMDDHHmmss'),
+        options.idNumberPic1,
+        options.idNumberPic2,
+        options.residencePermitPic,
+        options.residencePermitPic2,
+        options.openId
+    ]);
+
+    const petPrevSql = `update wx_pet_prevention_img set  photo_url = ?,photo_url2 = ?,update_time = ?  where  pet_reg_id = ?  `;
+    const petPrevlUpdatePromise = conn.query(petPrevSql, [options.photoUrl, options.photoUrl2, moment().format('YYYYMMDDHHmmss'), options.petRegId]);
+
+    const petRegSql = `update wx_pet_register_info  set pet_name = ?, gender = ?,breed = ?,coat_color = ?,
+                        birthday = ?,area_code = ?,pet_photo_url = ?,update_time = ?,receive = ?,receive_name = ?,
+                        courier_number = ?,receive_phone = ?,receive_addr = ?,deliver = ? where id = ? `
+    const petRegModel = [
+        options.petName || '',
+        options.gender || 0,
+        options.breed || '',
+        options.coatColor || '',
+        options.birthday || '',
+        options.areaCode || '',
+        options.petPhotoUrl || '',
+        moment().format('YYYYMMDDHHmmss'),
+        parseInt(options.receive || 0),
+        options.receiveName || '',
+        options.courierNumber || '',
+        options.receivePhone || '',
+        options.receiveAddr || '',
+        parseInt(options.deliver || 2),
+        options.petRegId
+    ]
+    const petRegUpdatePromise = conn.query(petRegSql, petRegModel);
+    return await Promise.all([petMasterSqlUpdatePromise, petPrevlUpdatePromise, petRegUpdatePromise])
 }

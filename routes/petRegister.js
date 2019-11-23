@@ -23,17 +23,17 @@ const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6
 const regDogRegNum = /^\d{6}$/;
 const moment = require('moment');
 const imgHttp = 'https://api.hbzner.com/dog';
-const {
-  cache,
-  reqCount,
-  expireTime
-} = require('../conn/redis');
+// const {
+//   cache,
+//   reqCount,
+//   expireTime
+// } = require('../conn/redis');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, '/home/manage_sys/app/public/images')
   },
   filename: function (req, file, cb) {
-    cb(null, `${Date.now()}.jpg`);
+    cb(null, `${Date.now()}${orderService.getMyUUId(10)}.jpg`);
   }
 })
 const upload = multer({
@@ -66,20 +66,20 @@ router.post('/addpetRegist', async (req, res, next) => {
       respMsg: '缺失unionid！'
     }
   }
-  let cacheKey = `petwx_${params.openid}`;
-  const cacheWxResCount = await cache.get(cacheKey);
-  //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
-  if (!cacheWxResCount) {
-    cache.set(cacheKey, 1, 'EX', expireTime);
-  } else {
-    if (cacheWxResCount > reqCount) {
-      throw {
-        status: '0001',
-        respMsg: "请勿频繁提交!"
-      }
-    }
-    cache.incr(cacheKey);
-  }
+  // let cacheKey = `petwx_${params.openid}`;
+  // const cacheWxResCount = await cache.get(cacheKey);
+  // //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
+  // if (!cacheWxResCount) {
+  //   cache.set(cacheKey, 1, 'EX', expireTime);
+  // } else {
+  //   if (cacheWxResCount > reqCount) {
+  //     throw {
+  //       status: '0001',
+  //       respMsg: "请勿频繁提交!"
+  //     }
+  //   }
+  //   cache.incr(cacheKey);
+  // }
   const bindWxUserInfo = await service.isWxPubBind(params.unionid, params.openid);
   if (bindWxUserInfo.length == 0) {
     throw {
@@ -592,6 +592,7 @@ router.post('/directBindDogRegNum', async (req, res) => {
     respMsg: "bind success !"
   });
 });
+
 router.post('/findAllArea', async (req, res, next) => {
   const result = await service.findAllArea();
   res.json({
@@ -600,5 +601,118 @@ router.post('/findAllArea', async (req, res, next) => {
   })
 })
 
+router.post('/queryRegInfoByRegId', async (req, res, next) => {
+  const petRegId = req.body.petRegId;
+  const result = await service.queryRegInfoByRegId(petRegId);
+  res.json({
+    status: 200,
+    result: result
+  })
+})
 
+router.post('/updatePetRegInfo', async (req, res, next) => {
+  const params = req.body;
+  if (!params.petRegId) {
+    return;
+  }
+  if (!params.openId || !params.unionId) {
+    throw {
+      status: 10011,
+      respMsg: " openId, unionId is not null !"
+    }
+  }
+  // let cacheKey = `petwx_${params.openid}`;
+  // const cacheWxResCount = await cache.get(cacheKey);
+  // //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
+  // if (!cacheWxResCount) {
+  //   cache.set(cacheKey, 1, 'EX', expireTime);
+  // } else {
+  //   if (cacheWxResCount > reqCount) {
+  //     throw {
+  //       status: '0001',
+  //       respMsg: "请勿频繁提交!"
+  //     }
+  //   }
+  //   cache.incr(cacheKey);
+  // }
+  const bindWxUserInfo = await service.isWxPubBind(params.unionid, params.openid);
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: '0001',
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  if (!params.petPhotoUrl) {
+    throw {
+      status: '0001',
+      respMsg: " lost petPhotoUrl"
+    }
+  }
+  if (!params.idNumberPic1) {
+    throw {
+      status: '0001',
+      respMsg: " lost idNumberPic1"
+    }
+  }
+  if (!params.idNumberPic2) {
+    throw {
+      status: '0001',
+      respMsg: " lost idNumberPic2"
+    }
+  }
+  if (!params.areaCode) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost areaCode"
+    }
+  }
+  if (params.dogRegNum) {
+    if (!regDogRegNum.test(params.dogRegNum)) {
+      throw {
+        respCode: '0001',
+        respMsg: " dogRegNum not  correct!"
+      }
+    }
+    const result = await service.judgedogRegNum(dogRegNum);
+    if (result && result.length > 0) {
+      throw {
+        respCode: '0001',
+        respMsg: " dogRegNum has exists !"
+      }
+    }
+  }
+  if (!params.realName) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost realName"
+    }
+  }
+  if (!regIdCard(params.idNumber)) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost idNumber"
+    }
+  }
+  //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
+  const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
+  if (hasUserBindSysInfo.length > 0) {
+    throw {
+      respCode: '0001',
+      respMsg: "每个人只能申请一条犬证信息！"
+    }
+  }
+  if (!regPhoneNum.test(params.contactPhone)) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost contactPhone"
+    }
+  }
+
+  await service.updatePetRegInfo(params);
+
+  res.json({
+    status: 200,
+    respMsg: '更新成功！'
+  })
+})
 module.exports = router;
