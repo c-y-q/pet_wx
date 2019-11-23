@@ -61,7 +61,7 @@ router.post('/wpPay', async (req, res) => {
         mid: mid,
         tid: tid,
         instMid: "MINIDEFAULT",
-        totalAmount: orderInfo[0].price * 100, //单位为分
+        totalAmount: orderInfo[0].total_price * 100, //单位为分
         subOpenId: openid,
         tradeType: "MINI",
         merchantUserId: merchantUserId,
@@ -112,7 +112,6 @@ router.post('/wpPay', async (req, res) => {
 })
 
 router.post('/wpPayNotify', async (req, res) => {
-    //toDO:支付成功后，需要去修改regist_info中的pay_type为1，微信支付
     /*
      * 1.支付成功后的时间，即为首次登记时间
      */
@@ -137,7 +136,7 @@ router.post('/wpPayNotify', async (req, res) => {
             respMsg: " order is not exists !"
         }
     }
-    if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.wppay.mid && tid == config.wppay.tid && orderInfo[0].price * 100 == totalAmount)) {
+    if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.wppay.mid && tid == config.wppay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
         res.body = 'FAIL';
         return;
     }
@@ -146,7 +145,8 @@ router.post('/wpPayNotify', async (req, res) => {
      * 2.1更新订单状态
      */
     await service.updateOrder(merOrderId, 1, payTime);
-
+    //2.2 支付成功后，需要去修改regist_info中的pay_type为1，微信支付
+    await service.updateRegisterPayType(orderInfo[0].creator, 1);
 })
 
 router.post('wxCreateOrder', async (req, res) => {
@@ -183,7 +183,7 @@ router.post('wxCreateOrder', async (req, res) => {
         order_status: 0,
         create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
         order_source: parseInt(options.orderSource) || 0,
-        price: price[0] || 9999
+        total_price: price[0] || 9999
 
     }
     await service.addWxOrder(orderModel);
@@ -264,7 +264,7 @@ router.post('/yearCheck', async (req, res) => {
         order_status: 0,
         create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
         order_source: 2,
-        price: price[0] || 9999
+        total_price: price[0] || 9999
     }
     await service.addWxOrder(orderModel);
     res.json({

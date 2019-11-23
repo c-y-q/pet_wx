@@ -160,7 +160,17 @@ router.post('/addpetRegist', async (req, res, next) => {
   const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   const price = await orderService.queryPrice(1);
   const receive = parseInt(params.receive) || 0;
-  const totalPrice = receive == 1 ? price : receive == 2 ? price + 10 : 9999;
+  let totalPrice = 0,
+    expresscost = 0;
+  if (receive == 1) { //自取
+    totalPrice = price;
+  } else if (receive == 2) { //快递
+    //查询快递金额并加上
+    expresscost = await orderService.queryExpressCost();
+    totalPrice = price + expresscost;
+  } else {
+    totalPrice = 9999;
+  }
   console.log(164, price, receive, totalPrice)
   const orderModel = {
     order_num: orderNum,
@@ -168,8 +178,8 @@ router.post('/addpetRegist', async (req, res, next) => {
     order_status: 0,
     create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
     order_source: 1,
-    price: totalPrice
-
+    total_price: totalPrice,
+    expresscost
   }
   await orderService.addWxOrder(orderModel);
   res.json({

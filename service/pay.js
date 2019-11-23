@@ -48,3 +48,14 @@ exports.updateOrder = async (orderNum, orderStatus, payTime) => {
     let sql = ` update wx_order set orderStatus = ?, pay_time = ?  where order_num = ?  `;
     return await conn.query(sql, [orderStatus, payTime, orderNum]);
 }
+
+exports.updateRegisterPayType = async (masterId, payType) => {
+    const sql = `update wx_pet_register_info set pay_type = ? where master_id = ? `
+    return await conn.query(sql, [payType, masterId]);
+}
+
+exports.queryExpressCost = async () => {
+    const sql = ` select data from sys_params where type = 'expresscost' `;
+    const result = await conn.query(sql);
+    return parseInt(result[0].data) || 0;
+}
