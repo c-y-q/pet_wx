@@ -66,7 +66,8 @@ exports.addPetregister = async (creatorId, petRegId, uuid, options) => {
         receive_addr: options.receiveAddr || '',
         deliver: parseInt(options.deliver || 2),
         audit_time: options.auditTime || '',
-        deliver_time: options.deliverTime || ''
+        deliver_time: options.deliverTime || '',
+        audit_type: 1
 
     }
     return await conn.query(sql, petRegModel);
