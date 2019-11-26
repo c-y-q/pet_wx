@@ -153,11 +153,11 @@ router.post('/addpetRegist', async (req, res, next) => {
     }
   }
   const uuid = uuidTool().replace(/-/gi, '');
+  const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   const addPetMasterResult = await service.addPetMaster(params.openid, uuid, params);
   const petRegId = uuidTool().replace(/-/gi, '');
-  const addPetRegResult = await service.addPetregister(params.openid, petRegId, uuid, params);
+  const addPetRegResult = await service.addPetregister(params.openid, petRegId, uuid, params, orderNum);
   const addPetPreventionResult = await service.addPetPreventionInfo(params.openid, petRegId, params);
-  const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   const price = await orderService.queryPrice(1);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
@@ -171,7 +171,7 @@ router.post('/addpetRegist', async (req, res, next) => {
   } else {
     totalPrice = 9999;
   }
-  console.log(164, price, receive, totalPrice)
+
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
@@ -179,6 +179,7 @@ router.post('/addpetRegist', async (req, res, next) => {
     create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
     order_source: 1,
     total_price: totalPrice,
+    pet_id: petRegId,
     expresscost
   }
   await orderService.addWxOrder(orderModel);
@@ -517,6 +518,9 @@ router.post('/queryRegList', async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
+        expireTime: obj.expire_time ? moment(obj.expire_time, 'YYYYMMDDHHmmss').format('YYYY-MM-DD') : '',
+        birthday: obj.birthday ? moment(obj.birthday, 'YYYYMMDD').format('YYYY-MM-DD') : '',
+        "idNumber": obj.id_number,
         "petType": obj.breed,
         "payType": obj.pay_type,
         "petColor": obj.coat_color,
@@ -615,7 +619,7 @@ router.post('/updatePetRegInfo', async (req, res, next) => {
   if (!params.petRegId) {
     return;
   }
-  if (!params.openId || !params.unionId) {
+  if (!params.unionid || !params.unionid) {
     throw {
       status: 10011,
       respMsg: " openId, unionId is not null !"
@@ -695,10 +699,10 @@ router.post('/updatePetRegInfo', async (req, res, next) => {
   }
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
   const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
-  if (hasUserBindSysInfo.length > 0) {
+  if (hasUserBindSysInfo.length == 0) {
     throw {
       respCode: '0001',
-      respMsg: "每个人只能申请一条犬证信息！"
+      respMsg: "该身份证申请的宠物信息不存在！"
     }
   }
   if (!regPhoneNum.test(params.contactPhone)) {
@@ -708,11 +712,115 @@ router.post('/updatePetRegInfo', async (req, res, next) => {
     }
   }
 
-  await service.updatePetRegInfo(params);
+  const result = await service.updatePetRegInfo(params);
 
   res.json({
     status: 200,
+    result,
     respMsg: '更新成功！'
+  })
+})
+
+router.post('/unbindPetDogRegNum', async (req, res) => {
+  const openId = req.body.openid;
+  const unionId = req.body.unionid;
+  const dogRegId = req.body.petRegId;
+  const dogRegNum = req.body.dogRegNum;
+  if (!openId || !unionId) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost params"
+    }
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  if (!dogRegNum) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost dogRegNum"
+    }
+  }
+  if (!regDogRegNum.test(dogRegNum)) {
+    throw {
+      respCode: '0001',
+      respMsg: " dogRegNum not  correct!"
+    }
+  }
+  const flag = await service.isBinwxRef(dogRegNum, dogRegId, openId, unionId);
+  if (flag) {
+    throw {
+      status: 10011,
+      respMsg: " 已绑定过该号码，请勿重复绑定 !"
+    }
+  }
+
+  const result = await service.unbindPetDogRegNum(openId, unionId, dogRegId, dogRegNum);
+  res.json({
+    status: 200,
+    respMsg: result ? '成功解除绑定' : '解除绑定失败'
+  });
+})
+
+/**
+ * 年审
+ */
+router.post('/yearCheck', async (req, res) => {
+  const openId = req.body.openid;
+  const unionId = req.body.unionid;
+  const petRegId = req.body.petRegId;
+  if (!openId || !unionId) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost params"
+    }
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  const options = {
+    year: req.body.year,
+    photoUrl: req.body.photoUrl,
+    photoUrl2: req.body.photoUrl2,
+    updateTime: moment().format('YYYYMMDDHHmmss')
+  }
+  await service.yearCheck(openId, petRegId, options);
+  const price = await orderService.queryPrice(2);
+  const receive = parseInt(req.body.receive) || 1;
+  let totalPrice = 0,
+    expresscost = 0;
+  if (receive == 1) { //自取
+    totalPrice = price;
+  } else if (receive == 2) { //快递
+    //查询快递金额并加上
+    expresscost = await orderService.queryExpressCost();
+    totalPrice = price + expresscost;
+  }
+  const orderModel = {
+    order_num: orderNum,
+    creator: openid,
+    order_status: 0,
+    create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
+    order_source: 2,
+    total_price: totalPrice,
+    pet_id: petRegId,
+    expresscost
+  }
+  //更新pet_reg_info中的lates_order_num
+  await service.updatePetRegLatestNum(openid, orderNum);
+  await orderService.addWxOrder(orderModel);
+  res.json({
+    status: 200,
+    orderNum,
+    result: '提交年审信息成功,请前往订单列表支付'
   })
 })
 module.exports = router;

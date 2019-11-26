@@ -1,7 +1,7 @@
 const conn = require('../conn/conn');
 const moment = require('moment');
 const imgHttp = 'http://192.168.50.111:7001';
-
+const imgDbPath = '/home/manage_sys/app'
 
 const replaceImgPath = '/home/manage_sys/app';
 //const imgHttp = 'https://api.hbzner.com/dog';
@@ -35,7 +35,7 @@ exports.addPetMaster = async (creatorId, uuid, options) => {
     return await conn.query(sql, petMaseterModel);
 }
 
-exports.addPetregister = async (creatorId, petRegId, uuid, options) => {
+exports.addPetregister = async (creatorId, petRegId, uuid, options, orderNum) => {
     const sql = `insert into wx_pet_register_info set ? `;
     const petRegModel = {
         id: petRegId,
@@ -71,8 +71,8 @@ exports.addPetregister = async (creatorId, petRegId, uuid, options) => {
         deliver: parseInt(options.deliver || 2),
         audit_time: options.auditTime || '',
         deliver_time: options.deliverTime || '',
-        audit_type: 1
-
+        audit_type: 1,
+        latest_order_num: orderNum
     }
     return await conn.query(sql, petRegModel);
 }
@@ -180,15 +180,15 @@ exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
 exports.queryRegList = async (openId, unionId) => {
     const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openId, unionId]);
     const wxPubRegIds = wxPubRegIdsResult.map(obj => obj.pet_reg_id && obj.pet_reg_id);
-    const petRegInfoIdsResult = await conn.query(`select id from wx_pet_register_info where creator_id = ? and pay_type <> -1 `, [openId]);
+    const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where wx_openId = ? and pay_type <> -1 `, [openId]);
     const petRegInfoIds = petRegInfoIdsResult.map(obj => obj.id);
     const resultRegIds = Array.from(new Set(wxPubRegIds.concat(petRegInfoIds)));
     console.log(169, resultRegIds);
     if (resultRegIds.length == 0) {
         return [];
     }
-    const resultSql = ` select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m
+    const resultSql = ` select p.expire_time,p.birthday,p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.id_number,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+                 from  pet_register_info p,sys_branch s,pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.id in (?)
@@ -328,10 +328,17 @@ exports.toTuoFeng = obj => {
 }
 
 exports.updatePetRegInfo = async (options) => {
+    //更具petRegId查找宠物主人id
+    const sql = 'select master_id from wx_pet_register_info where id = ? ';
+    const petRegMaster = await conn.query(sql, [options.petRegId]);
+    if (!petRegMaster.length) {
+        return [];
+    }
     const petMasterSql = `update wx_pet_master set real_name = ?,id_number = ?,residence_permit = ?,contact_phone = ?,residential_address = ?,
-                         update_time = ? ,id_number_pic1 = ?, id_number_pic1 = ?,
+                         update_time = ? ,id_number_pic1 = ?,
                         id_number_pic2 = ?, residence_permit_pic = ?, residence_permit_pic2 = ?
-                        where creator_id = ?  `
+                        where id = ?  `
+
     const petMasterSqlUpdatePromise = conn.query(petMasterSql, [
         options.realName,
         options.idNumber,
@@ -339,29 +346,30 @@ exports.updatePetRegInfo = async (options) => {
         options.contactPhone,
         options.residentialAddress,
         moment().format('YYYYMMDDHHmmss'),
-        options.idNumberPic1,
-        options.idNumberPic2,
-        options.residencePermitPic,
-        options.residencePermitPic2,
-        options.openId
+        options.idNumberPic1.replace(imgHttp, imgDbPath),
+        options.idNumberPic2.replace(imgHttp, imgDbPath),
+        options.residencePermitPic.replace(imgHttp, imgDbPath),
+        options.residencePermitPic2.replace(imgHttp, imgDbPath),
+        petRegMaster[0].master_id
     ]);
 
     const petPrevSql = `update wx_pet_prevention_img set  photo_url = ?,photo_url2 = ?,update_time = ?  where  pet_reg_id = ?  `;
-    const petPrevlUpdatePromise = conn.query(petPrevSql, [options.photoUrl, options.photoUrl2, moment().format('YYYYMMDDHHmmss'), options.petRegId]);
+    const petPrevlUpdatePromise = conn.query(petPrevSql, [options.photoUrl.replace(imgHttp, imgDbPath), options.photoUrl2.replace(imgHttp, imgDbPath), moment().format('YYYYMMDDHHmmss'), options.petRegId]);
 
-    const petRegSql = `update wx_pet_register_info  set pet_name = ?, gender = ?,breed = ?,coat_color = ?,
+    const petRegSql = `update wx_pet_register_info  set audit_status = ? ,pet_name = ?, gender = ?,breed = ?,coat_color = ?,
                         birthday = ?,area_code = ?,pet_photo_url = ?,update_time = ?,receive = ?,receive_name = ?,
                         courier_number = ?,receive_phone = ?,receive_addr = ?,deliver = ? where id = ? `
     const petRegModel = [
+        0,
         options.petName || '',
         options.gender || 0,
         options.breed || '',
         options.coatColor || '',
         options.birthday || '',
         options.areaCode || '',
-        options.petPhotoUrl || '',
+        options.petPhotoUrl.replace(imgHttp, imgDbPath) || '',
         moment().format('YYYYMMDDHHmmss'),
-        parseInt(options.receive || 0),
+        parseInt(options.receive || 1),
         options.receiveName || '',
         options.courierNumber || '',
         options.receivePhone || '',
@@ -370,5 +378,16 @@ exports.updatePetRegInfo = async (options) => {
         options.petRegId
     ]
     const petRegUpdatePromise = conn.query(petRegSql, petRegModel);
-    return await Promise.all([petMasterSqlUpdatePromise, petPrevlUpdatePromise, petRegUpdatePromise])
+    return await Promise.all([petMasterSqlUpdatePromise, petPrevlUpdatePromise, petRegUpdatePromise]); // 
+}
+
+exports.unbindPetDogRegNum = async (openid, unionId, petRegId, dogRegNum) => {
+    const sql = ' delete from  wx_pub_petInf_rel where  unionId = ? and pet_reg_id = ? and openId = ? and dog_reg_num = ? ';
+    const result = await conn.query(sql, [openid, unionId, petRegId, dogRegNum]);
+    return result.affectedRows == 1;
+}
+
+exports.updatePetRegLatestNum = async (openid, orderNum) => {
+    const sql = ' update wx_pet_register_info set latest_order_num = ? where master_id = ? ';
+    return await conn.query(sql, [orderNum, openid]);
 }
