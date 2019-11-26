@@ -165,9 +165,9 @@ exports.findNotHasBindDogRegNum = async (dogRegNum) => {
 }
 exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
     const sql = `select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url
-              from  wx_pet_register_info p,sys_branch s,wx_pet_master m
+              from  pet_register_info p,sys_branch s,pet_master m
               where
-              p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+              p.area_code = s.code and m.id = p.master_id
               and p.pet_state > 0
               and p.audit_status = 1
               and m.id_number = '${idNumber}'
@@ -180,9 +180,9 @@ exports.findPetInfosByIdNum = async (idNumber, realName, contactPhone) => {
 exports.queryRegList = async (openId, unionId) => {
     const wxPubRegIdsResult = await conn.query(`select pet_reg_id from wx_pub_petInf_rel where openId = ? and unionId = ?`, [openId, unionId]);
     const wxPubRegIds = wxPubRegIdsResult.map(obj => obj.pet_reg_id && obj.pet_reg_id);
-    const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where wx_openId = ? and pay_type <> -1 `, [openId]);
-    const petRegInfoIds = petRegInfoIdsResult.map(obj => obj.id);
-    const resultRegIds = Array.from(new Set(wxPubRegIds.concat(petRegInfoIds)));
+    // const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where wx_openId = ? and pay_type <> -1 `, [openId]);
+    // const petRegInfoIds = petRegInfoIdsResult.map(obj => obj.id);
+    const resultRegIds = Array.from(new Set(wxPubRegIds));
     console.log(169, resultRegIds);
     if (resultRegIds.length == 0) {
         return [];
@@ -388,6 +388,6 @@ exports.unbindPetDogRegNum = async (openid, unionId, petRegId, dogRegNum) => {
 }
 
 exports.updatePetRegLatestNum = async (openid, orderNum) => {
-    const sql = ' update wx_pet_register_info set latest_order_num = ? where master_id = ? ';
+    const sql = ' update wx_pet_register_info set latest_order_num = ? where creator_id = ? ';
     return await conn.query(sql, [orderNum, openid]);
 }

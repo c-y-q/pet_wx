@@ -462,6 +462,7 @@ router.post('/findPetInfosByIdNum', async (req, res) => {
     }
   }
   const result = await service.findPetInfosByIdNum(idNumber, realName, contactPhone);
+  console.log(465, result)
   let petRegInfo = [];
   if (result.length > 0) {
     for (let obj of result) {
