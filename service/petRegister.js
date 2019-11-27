@@ -92,7 +92,7 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 }
 
 exports.queryRegStatu = async (openId) => {
-    const sql = `select p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
@@ -146,7 +146,7 @@ exports.findNotBindRegIdsByOpenId = async (openId) => {
     const sql = `select p.pay_type,p.audit_remarks, t.name petType, c.color petColor,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m, pet_type t,pet_color c
                  where 
-                 p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+                 p.area_code = s.code and m.id = p.master_id
                  and p.creator_id = ?
                  and p.pay_type <> -1
                  and p.pet_state =1
@@ -190,7 +190,7 @@ exports.queryRegList = async (openId, unionId) => {
     const resultSql = ` select p.expire_time,p.birthday,p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.id_number,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  pet_register_info p,sys_branch s,pet_master m
                  where 
-                 p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+                 p.area_code = s.code and m.id = p.master_id
                  and p.id in (?)
                  and p.dog_reg_num <> ''
                  order by p.create_time desc `;
@@ -383,11 +383,11 @@ exports.updatePetRegInfo = async (options) => {
 
 exports.unbindPetDogRegNum = async (openid, unionId, petRegId, dogRegNum) => {
     const sql = ' delete from  wx_pub_petInf_rel where  unionId = ? and pet_reg_id = ? and openId = ? and dog_reg_num = ? ';
-    const result = await conn.query(sql, [openid, unionId, petRegId, dogRegNum]);
+    const result = await conn.query(sql, [unionId, petRegId, openid, dogRegNum]);
     return result.affectedRows == 1;
 }
 
 exports.updatePetRegLatestNum = async (openid, orderNum) => {
-    const sql = ' update wx_pet_register_info set latest_order_num = ? where creator_id = ? ';
+    const sql = ' update wx_pet_register_info set latest_order_num = ?,audit_type = 2,audit_status = 3,pay_type = -1 where creator_id = ? ';
     return await conn.query(sql, [orderNum, openid]);
 }

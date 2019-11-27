@@ -234,6 +234,7 @@ router.post('/queryRegStatu', async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
+        expressname: obj.expressname || '',
         "payType": obj.pay_type,
         // "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
         "petColor": obj.coat_color,
@@ -753,10 +754,10 @@ router.post('/unbindPetDogRegNum', async (req, res) => {
     }
   }
   const flag = await service.isBinwxRef(dogRegNum, dogRegId, openId, unionId);
-  if (flag) {
+  if (!flag) {
     throw {
       status: 10011,
-      respMsg: " 已绑定过该号码，请勿重复绑定 !"
+      respMsg: " 您未绑定，不能解绑 !"
     }
   }
 
