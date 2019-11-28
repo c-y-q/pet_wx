@@ -52,7 +52,7 @@ router.post('/wpPay', async (req, res) => {
         Authorization,
         mid,
         merchantUserId,
-        tid
+        tid  
     } = config.wppay;
     const params = {
         msgId: uuidTool().replace(/-/gi, ''),

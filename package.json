@@ -26,5 +26,17 @@
     "mysql2": "^1.7.0",
     "uuid": "^3.3.3",
     "wechat": "^2.1.0"
-  }
+  },
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/c-y-q/pet_wx.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/c-y-q/pet_wx/issues"
+  },
+  "homepage": "https://github.com/c-y-q/pet_wx#readme",
+  "description": ""
 }
