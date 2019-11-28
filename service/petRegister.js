@@ -281,7 +281,6 @@ exports.yearCheck = async (creatorId, petRegId, options, dogRegNum) => {
     const petRegParam = [creatorId, dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, petRegParam);
-    const petPrevSql = `update pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const petPrevParam = [
         options.year,
@@ -290,9 +289,8 @@ exports.yearCheck = async (creatorId, petRegId, options, dogRegNum) => {
         options.updateTime,
         petRegId
     ]
-    const petPrevPromise = conn.query(petPrevSql, petPrevParam);
     const wxPetPrevPromise = conn.query(wxPetPrevSql, petPrevParam);
-    return await Promise.all([petRegPromise, wxPetRegPromise, petPrevPromise, wxPetPrevPromise]);
+    return await Promise.all([petRegPromise, wxPetRegPromise, wxPetPrevPromise]);
 };
 
 exports.queryRegInfoByRegId = async queryRegInfoByRegId => {
