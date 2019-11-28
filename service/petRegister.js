@@ -275,20 +275,24 @@ exports.hasUserBindSysInfo = async idNumber => {
 };
 
 //年审
-exports.yearCheck = async (creatorId, petRegId, options) => {
-    const petRegSql = `update pet_register_info set pet_state = 3, wx_openId = ？ where master_id = ? `;
-    const petRegPromise = conn.query(petRegSql, [creatorId, creatorId]);
-
+exports.yearCheck = async (creatorId, petRegId, options, dogRegNum) => {
+    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0 where dog_reg_num = ? `;
+    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0 where dog_reg_num = ? `;
+    const petRegParam = [creatorId, dogRegNum];
+    const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
+    const petRegPromise = conn.query(petRegSql, petRegParam);
     const petPrevSql = `update pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
-    const petPrevPromise = conn.query(petPrevSql, [
+    const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
+    const petPrevParam = [
         options.year,
         options.photoUrl,
         options.photoUrl2,
         options.updateTime,
         petRegId
-    ]);
-
-    return await Promise.all([petRegPromise, petPrevPromise]);
+    ]
+    const petPrevPromise = conn.query(petPrevSql, petPrevParam);
+    const wxPetPrevPromise = conn.query(wxPetPrevSql, petPrevParam);
+    return await Promise.all([petRegPromise, wxPetRegPromise, petPrevPromise, wxPetPrevPromise]);
 };
 
 exports.queryRegInfoByRegId = async queryRegInfoByRegId => {
