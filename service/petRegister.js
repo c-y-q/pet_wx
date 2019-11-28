@@ -277,7 +277,7 @@ exports.hasUserBindSysInfo = async idNumber => {
 //年审
 exports.yearCheck = async (creatorId, petRegId, options, dogRegNum) => {
     const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0 where dog_reg_num = ? `;
-    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0 where dog_reg_num = ? `;
+    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = -1 where dog_reg_num = ? `;
     const petRegParam = [creatorId, dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, petRegParam);
