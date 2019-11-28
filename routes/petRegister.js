@@ -440,6 +440,7 @@ router.post('/findNotHasBindDogRegNum', async (req, res) => {
 router.post('/findPetInfosByIdNum', async (req, res) => {
   const idNumber = req.body.idNumber;
   const realName = req.body.realName;
+  const dogRegNum = req.body.dogRegNum;
   const contactPhone = req.body.contactPhone;
   const openId = req.body.openid;
   const unionId = req.body.unionid;
@@ -462,8 +463,7 @@ router.post('/findPetInfosByIdNum', async (req, res) => {
       respMsg: " lost contactPhone"
     }
   }
-  const result = await service.findPetInfosByIdNum(idNumber, realName, contactPhone);
-  console.log(465, result)
+  const result = await service.findPetInfosByIdNum(idNumber, realName, contactPhone, dogRegNum);
   let petRegInfo = [];
   if (result.length > 0) {
     for (let obj of result) {
@@ -788,41 +788,85 @@ router.post('/yearCheck', async (req, res) => {
       respMsg: " to bind wxpulic !"
     }
   }
+  //为防止用户多次提交年审，做限制
+  const preventionInfo = await service.findPreventionInfo(petRegId);
+  if (preventionInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " 该宠物信息不存在 !"
+    }
+    // expire_time,pet_state
+  } else if (preventionInfo.length && parseInt(preventionInfo[0].year) > moment().format('YYYY')) {
+    throw {
+      status: 10010,
+      respMsg: `请在${preventionInfo[0].year}年进行年审信息提交！`
+    }
+  }
+
   const options = {
-    year: req.body.year,
+    year: moment().add(1, 'years').format('YYYY'),
     photoUrl: req.body.photoUrl,
     photoUrl2: req.body.photoUrl2,
     updateTime: moment().format('YYYYMMDDHHmmss')
   }
+  const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   await service.yearCheck(openId, petRegId, options);
   const price = await orderService.queryPrice(2);
-  const receive = parseInt(req.body.receive) || 1;
-  let totalPrice = 0,
-    expresscost = 0;
-  if (receive == 1) { //自取
-    totalPrice = price;
-  } else if (receive == 2) { //快递
-    //查询快递金额并加上
-    expresscost = await orderService.queryExpressCost();
-    totalPrice = price + expresscost;
-  }
   const orderModel = {
     order_num: orderNum,
     creator: openid,
     order_status: 0,
     create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
     order_source: 2,
-    total_price: totalPrice,
+    total_price: price,
     pet_id: petRegId,
-    expresscost
+    expresscost: 0
   }
   //更新pet_reg_info中的lates_order_num
-  await service.updatePetRegLatestNum(openid, orderNum);
+  await service.updatePetRegLatestNum(openId, orderNum);
   await orderService.addWxOrder(orderModel);
   res.json({
     status: 200,
     orderNum,
     result: '提交年审信息成功,请前往订单列表支付'
+  })
+})
+
+router.post('/updateYearCheckInfo', async (req, res) => {
+  const openId = req.body.openid;
+  const unionId = req.body.unionid;
+  const petRegId = req.body.petRegId;
+  if (!openId || !unionId) {
+    throw {
+      respCode: '0001',
+      respMsg: " lost params"
+    }
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    }
+  }
+  //为防止用户多次提交年审，做限制
+  const preventionInfo = await service.findPreventionInfo(petRegId);
+  if (preventionInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " 该宠物信息不存在 !"
+    }
+    // expire_time,pet_state
+  }
+  const options = {
+    photoUrl: req.body.photoUrl,
+    photoUrl2: req.body.photoUrl2,
+    updateTime: moment().format('YYYYMMDDHHmmss')
+  }
+  const result = await service.updateYearCheckInfo(petRegId, options);
+  res.json({
+    status: result ? 200 : 201,
+    respMsg: result ? '更改年审信息成功！' : '更改信息失败！'
   })
 })
 module.exports = router;
