@@ -59,3 +59,8 @@ exports.queryExpressCost = async () => {
     const result = await conn.query(sql);
     return parseInt(result[0].data) || 0;
 }
+
+exports.queryOrderStatus = async (openId, orderSource) => {
+    const sql = ' select * from wx_order where creator = ? and order_source = ? ';
+    return await conn.query(sql, [openId, orderSource])
+}
