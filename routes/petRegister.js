@@ -629,7 +629,7 @@ router.post("/directBindDogRegNum", async (req, res) => {
     code
   } = req.body;
 
-  const isfree = [];
+  let isfree = '';
   const cacheWxResCount = await cache.get(phone);
   if (code == cacheWxResCount) {
     isfree = await service.isfree(dogRegNum, phone);
@@ -695,6 +695,7 @@ router.post("/directBindDogRegNum", async (req, res) => {
     isfree[0].id,
     dogRegNum
   );
+  console.log('---------------696------------', isfree);
   res.json({
     status: 200,
     respMsg: "bind success !"
@@ -1211,6 +1212,13 @@ router.post('/addPetInfo', async (req, res) => {
     status: 200,
     result: resData
   })
+})
+
+// 年审
+router.post('/petmasterexamine', async (req, res) => {
+  const dogRegNum = req.body.dogRegNum;
+  const result = await service.petmasterexamine(dogRegNum);
+  return result;
 })
 
 module.exports = router;

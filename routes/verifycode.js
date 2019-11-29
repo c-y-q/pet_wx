@@ -43,14 +43,16 @@ router.post('/verify', async (req, res) => {
     const isfree = await service.isfree(phone, dogRegNum);
     console.log(52, isfree);
     if (isfree.length > 0) {
-        console.log('查询成功')	
+        // const resnum = await cache.incr('string');
+        // console.log('-------------验证码限制次数----------',resnum);
+        // return;
         const cacheWxResCount = await cache.get(phone);			
         if (!cacheWxResCount) {
 
             const axioes = await axios.get(url, {headers: {Authorization:"APPCODE 2f9ea1ef7eb445368398c0c767521a87"}})
-            if(axioes){
-                console.log('已经发送');
 
+            if (resnum)
+            if(axioes){
                 const expireTime = 60 * 2;
                 await cache.set(phone, code, 'EX', expireTime);
                 res.json({
