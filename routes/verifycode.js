@@ -43,33 +43,32 @@ router.post('/verify', async (req, res) => {
     const isfree = await service.isfree(phone, dogRegNum);
     console.log(52, isfree);
     if (isfree.length > 0) {
-        console.log('查询成功')				
-        const axioes = await axios.get(url, {headers: {Authorization:"APPCODE 2f9ea1ef7eb445368398c0c767521a87"}})
+        console.log('查询成功')	
+        const cacheWxResCount = await cache.get(phone);			
+        if (!cacheWxResCount) {
+
+            const axioes = await axios.get(url, {headers: {Authorization:"APPCODE 2f9ea1ef7eb445368398c0c767521a87"}})
             if(axioes){
                 console.log('已经发送');
-                console.log(53, code);
 
                 const expireTime = 60 * 2;
-                const cacheWxResCount = await cache.get(phone);
-                console.log('------54------', cacheWxResCount);
-                //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
-                if (!cacheWxResCount) {
-                  const phonecode = await cache.set(phone, code, 'EX', expireTime);
-                  console.log('-----存储的验证码----', phonecode);
-                  res.json({
+                await cache.set(phone, code, 'EX', expireTime);
+                res.json({
                     code: "200",
                     respMsg: '验证码发送成功!'
                   });
                 } else {
+                    console.log(phone, ' 验证码发送异常');
                     throw {
-                      status: '0001',
-                      respMsg: "请勿频繁提交!"
-                    }
-                }
-    
+                        status: '0001',
+                        respMsg: "验证码发送异常!"
+                      }
+                }    
             } else {
-                console.log(err)
-                console.log(phone, ' 验证码发送异常');
+                throw {
+                    status: '0001',
+                    respMsg: "请勿频繁提交!"
+                    }
             };
     } else {
         console.log('查询失败');
