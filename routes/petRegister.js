@@ -7,7 +7,9 @@ const axios = require("axios");
 const orderService = require("../service/pay");
 const caches = require('../conn/redis');
 
-const { cache } = caches;
+const {
+  cache
+} = caches;
 
 function regIdCard(idcode) {
   const weight_factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
@@ -585,7 +587,7 @@ router.post("/queryRegList", async (req, res) => {
           moment(obj.expire_time, "YYYYMMDDHHmmss").format("YYYY-MM-DD") : "",
         birthday: obj.birthday ?
           moment(obj.birthday, "YYYYMMDD").format("YYYY-MM-DD") : "",
-        idNumber: obj.id_number,
+        idNumber: obj.id_number.replace(/^(.{6})(?:\d+)(.{4})$/, "$1********$2"),
         petType: obj.breed,
         payType: obj.pay_type,
         petColor: obj.coat_color,
@@ -609,7 +611,7 @@ router.post("/queryRegList", async (req, res) => {
           "",
         masterName: obj.real_name || "",
         masterAdress: obj.residential_address || "",
-        contactPhone: obj.contact_phone || ""
+        contactPhone: obj.contact_phone && obj.contact_phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") || ""
       };
     });
   }
@@ -630,21 +632,21 @@ router.post("/directBindDogRegNum", async (req, res) => {
   const isfree = [];
   const cacheWxResCount = await cache.get(phone);
   if (code == cacheWxResCount) {
-      isfree = await service.isfree(dogRegNum, phone);
-      if (isfree.length > 0) {
-        console.log('验证通过!');
-      } else {
-        res.json({
-            status: 10011,
-            respMsg: '验证失败!'
-          });
-      }
+    isfree = await service.isfree(dogRegNum, phone);
+    if (isfree.length > 0) {
+      console.log('验证通过!');
+    } else {
+      res.json({
+        status: 10011,
+        respMsg: '验证失败!'
+      });
+    }
   } else {
-      throw {
-          status: 10011,
-          respMsg: "验证码验证失败!"
-      }
-}
+    throw {
+      status: 10011,
+      respMsg: "验证码验证失败!"
+    }
+  }
 
 
 
@@ -959,7 +961,7 @@ router.post("/yearCheck", async (req, res) => {
     params: options,
     dogRegNum
   }
-  cache.hset(`${orderNum}`, JSON.stringify(yearCheckredisParams), 'EX', 60 * 3);
+  cache.set(`${orderNum}`, JSON.stringify(yearCheckredisParams), 'EX', 60 * 3);
   res.json({
     status: 200,
     result: resData
@@ -1204,7 +1206,7 @@ router.post('/addPetInfo', async (req, res) => {
     params,
     orderNum
   }
-  cache.hset(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
+  cache.set(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
   res.json({
     status: 200,
     result: resData

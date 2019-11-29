@@ -135,7 +135,7 @@ router.post('/wpPayNotify', async (req, res) => {
      * 1.2查询本系统订单状态，获取金额进行对比
      */
     const orderInfo = await service.queryOrder('', merOrderId);
-    if (!orderInfo.length || orderInfo[0].order_status != 0) {
+    if (!orderInfo.length) {
         throw {
             status: '0001',
             respMsg: " order is not exists !"
@@ -149,15 +149,19 @@ router.post('/wpPayNotify', async (req, res) => {
     /**
      * 2.1更新订单状态
      */
-    await service.updateOrder(merOrderId, 1, payTime);
-    const cacheParams = await cache.hget(`${merOrderId}`);
+    if (orderInfo[0].order_status == 0) {
+        await service.updateOrder(merOrderId, 1, payTime);
+    }
+    const cacheParams = await cache.get(`${merOrderId}`);
     console.log(156, cacheParams)
     const resdisParams = JSON.parse(cacheParams)
+    //查询petRegId信息是否已存在wx_pet_reg_info
+    const judePetExists = await registerService.petRegIdPay(orderInfo[0].pet_id);
     //2.2 支付成功后，从redis中取出数据，保存到微信表中.
-    if (orderInfo[0].order_source == 1) { //新登记
+    if (orderInfo[0].order_source == 1 && judePetExists.length == 0 && cacheParams) { //新登记
         //添加新注册信息
         await registerService.addPetRegAllInfo(resdisParams);
-    } else if (orderInfo[0].order_source == 2) { //年审
+    } else if (orderInfo[0].order_source == 2 && cacheParams) { //年审
         await registerService.yearCheck(resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum);
     }
 })
