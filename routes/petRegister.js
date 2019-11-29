@@ -693,6 +693,7 @@ router.post("/directBindDogRegNum", async (req, res) => {
     isfree[0].id,
     dogRegNum
   );
+  console.log('---------------696------------', isfree);
   res.json({
     status: 200,
     respMsg: "bind success !"
