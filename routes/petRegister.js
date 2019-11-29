@@ -627,7 +627,7 @@ router.post("/directBindDogRegNum", async (req, res) => {
     code
   } = req.body;
 
-  const isfree = [];
+  let isfree = '';
   const cacheWxResCount = await cache.get(phone);
   if (code == cacheWxResCount) {
       isfree = await service.isfree(dogRegNum, phone);
