@@ -6,6 +6,11 @@ const moment = require('moment');
 const service = require('../service/pay');
 const registerService = require('../service/petRegister');
 const axios = require('axios');
+const {
+    cache,
+    reqCount,
+    expireTime
+} = require('../conn/redis');
 /**
  * 统一下单
  */
@@ -52,7 +57,7 @@ router.post('/wpPay', async (req, res) => {
         Authorization,
         mid,
         merchantUserId,
-        tid  
+        tid
     } = config.wppay;
     const params = {
         msgId: uuidTool().replace(/-/gi, ''),
@@ -145,52 +150,16 @@ router.post('/wpPayNotify', async (req, res) => {
      * 2.1更新订单状态
      */
     await service.updateOrder(merOrderId, 1, payTime);
-    //2.2 支付成功后，需要去修改regist_info中的pay_type为1，微信支付
-    await service.updateRegisterPayType(orderInfo[0].creator, 1);
-})
-
-router.post('wxCreateOrder', async (req, res) => {
-    //1.判断微信用户是否关注公众号
-    const {
-        openid,
-        unionid,
-        payType
-    } = req.body;
-    if (!openid) {
-        throw {
-            status: '0001',
-            respMsg: " lost openid"
-        }
+    const cacheParams = await cache.hget(`${merOrderId}`);
+    console.log(156, cacheParams)
+    const resdisParams = JSON.parse(cacheParams)
+    //2.2 支付成功后，从redis中取出数据，保存到微信表中.
+    if (orderInfo[0].order_source == 1) { //新登记
+        //添加新注册信息
+        await registerService.addPetRegAllInfo(resdisParams);
+    } else if (orderInfo[0].order_source == 2) { //年审
+        await registerService.yearCheck(resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum);
     }
-    if (!unionid) {
-        throw {
-            status: '0001',
-            respMsg: '缺失unionid！'
-        }
-    }
-    const bindWxUserInfo = await registerService.isWxPubBind(unionid, openid);
-    if (bindWxUserInfo.length == 0) {
-        throw {
-            status: '0001',
-            respMsg: " to bind wxpulic !"
-        }
-    }
-    const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${service.getMyUUId(5)}`;
-    const price = await service.queryPrice(payType);
-    const orderModel = {
-        order_num: orderNum,
-        creator: openid,
-        order_status: 0,
-        create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
-        order_source: parseInt(options.orderSource) || 0,
-        total_price: price[0] || 9999
-
-    }
-    await service.addWxOrder(orderModel);
-    res.json({
-        status: 200,
-        result: orderModel
-    })
 })
 
 //查询当前用户所有订单
@@ -228,48 +197,4 @@ router.post('/queryWxOrder', async (req, res) => {
     })
 })
 
-/**
- * 年审
- */
-router.post('/yearCheck', async (req, res) => {
-    const openId = req.body.openid;
-    const unionId = req.body.unionid;
-    const petRegId = req.body.petRegId;
-    if (!openId || !unionId) {
-        throw {
-            respCode: '0001',
-            respMsg: " lost params"
-        }
-    }
-    const bindWxUserInfo = await registerService.isWxPubBind(unionId, openId);
-    if (bindWxUserInfo.length == 0) {
-        throw {
-            status: 10010,
-            respMsg: " to bind wxpulic !"
-        }
-    }
-    const options = {
-        year: req.body.year,
-        photoUrl: req.body.photoUrl,
-        photoUrl2: req.body.photoUrl2,
-        updateTime: moment().format('YYYYMMDDHHmmss')
-    }
-    await registerService.yearCheck(openId, petRegId, options);
-    //创建订单
-    const orderNum = `${moment().format('YYYYMMDDHHmmss')}${new Date().getTime()}${service.getMyUUId(5)}`;
-    const price = await service.queryPrice(2);
-    const orderModel = {
-        order_num: orderNum,
-        creator: openid,
-        order_status: 0,
-        create_time: moment().format('YYYY-MM-DD HH:mm:ss'),
-        order_source: 2,
-        total_price: price[0] || 9999
-    }
-    await service.addWxOrder(orderModel);
-    res.json({
-        status: 200,
-        result: '提交年审信息成功,请前往订单列表支付'
-    })
-})
 module.exports = router;

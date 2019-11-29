@@ -1,6 +1,8 @@
 const conn = require('../conn/conn');
 const moment = require('moment');
-
+const config = require('../config/config');
+const axios = require("axios");
+const uuidTool = require("uuid/v4");
 const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 exports.getMyUUId = n => {
     let str = '';
@@ -60,7 +62,73 @@ exports.queryExpressCost = async () => {
     return parseInt(result[0].data) || 0;
 }
 
-exports.queryOrderStatus = async (openId, orderSource) => {
-    const sql = ' select * from wx_order where creator = ? and order_source = ? ';
-    return await conn.query(sql, [openId, orderSource])
+exports.queryOrderStatus = async (openId, orderSource, petRegId) => {
+    let sql = ' select * from wx_order where creator = ? and order_source = ?  ';
+    if (petRegId) {
+        sql += ' and pet_id = ? '
+    }
+    return await conn.query(sql, [openId, orderSource, petRegId])
+}
+
+//统一下单封装
+exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
+    //3.支付
+    const {
+        Authorization,
+        mid,
+        merchantUserId,
+        tid
+    } = config.wppay;
+    const params = {
+        msgId: uuidTool().replace(/-/gi, ''),
+        requestTimestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
+        merOrderId: orderNum,
+        mid: mid,
+        tid: tid,
+        instMid: "MINIDEFAULT",
+        totalAmount: totalPrice * 100, //单位为分
+        subOpenId: openid,
+        tradeType: "MINI",
+        merchantUserId: merchantUserId,
+        msgType: "WXPay",
+        msgSrc: "WWW.TEST.COM",
+        msgSrcId: "3194",
+        notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify"
+    }
+
+    const requestOptins = {
+        method: 'POST',
+        headers: {
+            'Authorization': Authorization
+        },
+        data: params,
+        url: 'http://58.247.0.18:29015/v1/netpay/wx/unified-order' //https://api-mop.chinaums.com/v1/netpay/wx/unified-order
+    }
+    const {
+        data: {
+            targetSys,
+            status,
+            errCode,
+            totalAmount,
+            targetStatus,
+            qrCode,
+            miniPayRequest,
+            merOrderId
+        }
+    } = await axios(requestOptins);
+    if (status != 'WAIT_BUYER_PAY' || errCode != 'SUCCESS' || targetStatus != "SUCCESS|SUCCESS" || targetSys != 'WXPay') {
+        throw {
+            status: 400,
+            msg: 'order is not right!'
+        }
+    }
+    const resData = {
+        appId: miniPayRequest.appid,
+        nonceStr: miniPayRequest.noncestr,
+        package: `prepay_id=${miniPayRequest.prepayid}`,
+        signType: 'MD5',
+        timeStamp: parseInt(Date.now() / 1000).toString(),
+        paySign: miniPayRequest.sign
+    }
+    return resData
 }
