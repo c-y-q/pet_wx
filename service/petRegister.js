@@ -2,7 +2,7 @@ const conn = require("../conn/conn");
 const moment = require("moment");
 const imgHttp = "http://192.168.50.111:7001";
 const imgDbPath = "/home/manage_sys/app";
-
+const config = require('../config/config');
 const replaceImgPath = "/home/manage_sys/app";
 //const imgHttp = 'https://api.hbzner.com/dog';
 exports.findPetColor = async () => {
@@ -97,7 +97,7 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
     return await conn.query(sql, petPreventionModel);
 };
 
-exports.queryRegStatu = async openId => {
+exports.queryRegStatu = async (openId) => {
     const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m
                  where 
@@ -275,10 +275,10 @@ exports.hasUserBindSysInfo = async idNumber => {
 };
 
 //年审
-exports.yearCheck = async (creatorId, petRegId, options, dogRegNum) => {
+exports.yearCheck = async (petRegId, options, dogRegNum) => {
     const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0 where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = -1 where dog_reg_num = ? `;
-    const petRegParam = [creatorId, dogRegNum];
+    const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, petRegParam);
     const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
@@ -464,4 +464,34 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
     ]);
     return petPrevUpdateResult.affectedRows == 1;
 };
+
+exports.canOldUpdateCount = async (options) => {
+    const sql = `select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
+                 where state = 1 
+                 and djhm = ?,
+                 and name = ?,
+                 and sex = ? ,
+                 and type = ?,
+                 and color = ?,
+                 and birthday = ? 
+                 GROUP BY djhm,name,sex,type,color,birthday `;
+    const result = await conn.query(sql, [options.djhm, options.name, options.sex, options.type, options.color, options.birthday]);
+    //count > 1,查无信息，起窗口办理
+    //count == 0,不存在旧证升级信息，请到窗口办理
+    return result[0].count;
+}
+
+exports.addPetRegAllInfo = async (options) => {
+    const {
+        openid,
+        petRegId,
+        uuid,
+        params,
+        orderNum
+    } = options;
+    const petMasterPromise = this.addPetMaster(openid, uuid, params);
+    const petPrevPromise = this.addPetPreventionInfo(openid, petRegId, params);
+    const petRegInfoPromise = this.addPetregister(openid, petRegId, uuid, params, orderNum);
+    return await Promise.all([petMasterPromise, petPrevPromise, petRegInfoPromise]);
+}
 //todo： 小程序新登记审核通过的，需要在网页端插入wx_pub_petInf_rel,即小程序端绑定微信用户自己的狗证

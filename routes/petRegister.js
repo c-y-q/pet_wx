@@ -52,7 +52,7 @@ router.post("/uploadImg", upload.single("file"), async (req, res, next) => {
 /**
  * 添加宠物注册信息到pet_regist
  */
-router.post("/addpetRegist", async (req, res, next) => {
+router.post("/addpetRegist2", async (req, res, next) => {
   const params = req.body;
   if (!params.openid) {
     throw {
@@ -91,7 +91,7 @@ router.post("/addpetRegist", async (req, res, next) => {
       respMsg: " to bind wxpulic !"
     };
   }
-  const orderStatusInfo = await orderService.queryOrderStatus(params.openid, 1);
+  const orderStatusInfo = await orderService.queryOrderStatus(params.openid, 1, '');
   if (orderStatusInfo.length && orderStatusInfo[0].order_status == 0) {
     throw {
       status: 10010,
@@ -855,6 +855,7 @@ router.post("/yearCheck", async (req, res) => {
   const openId = req.body.openid;
   const unionId = req.body.unionid;
   const petRegId = req.body.petRegId;
+  const dogRegNum = req.body.dogRegNum;
   if (!openId || !unionId) {
     throw {
       respCode: "0001",
@@ -866,6 +867,12 @@ router.post("/yearCheck", async (req, res) => {
     throw {
       status: 10010,
       respMsg: " to bind wxpulic !"
+    };
+  }
+  if (!regDogRegNum.test(dogRegNum)) {
+    throw {
+      respCode: "0001",
+      respMsg: " dogRegNum not  correct!"
     };
   }
   //为防止用户多次提交年审，做限制
@@ -886,7 +893,7 @@ router.post("/yearCheck", async (req, res) => {
   //   };
   // }
   //判断是否有未支付的年审订单,如果有，则不能再次年审
-  const orderStatusInfo = await orderService.queryOrderStatus(openId, 2);
+  const orderStatusInfo = await orderService.queryOrderStatus(openId, 2, petRegId);
   if (orderStatusInfo.length && orderStatusInfo[0].order_status == 0) {
     throw {
       status: 10010,
@@ -904,7 +911,8 @@ router.post("/yearCheck", async (req, res) => {
   const orderNum = `${moment().format(
     "YYYYMMDDHHmmss"
   )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
-  await service.yearCheck(openId, petRegId, options);
+  // const yearCheckResult = await service.yearCheck(petRegId, options, dogRegNum);
+
   const price = await orderService.queryPrice(2);
   const orderModel = {
     order_num: orderNum,
@@ -916,13 +924,17 @@ router.post("/yearCheck", async (req, res) => {
     pet_id: petRegId,
     expresscost: 0
   };
-  //更新pet_reg_info中的lates_order_num
-  await service.updatePetRegLatestNum(openId, orderNum);
   await orderService.addWxOrder(orderModel);
+  const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
+  const yearCheckredisParams = {
+    petRegId,
+    params: options,
+    dogRegNum
+  }
+  cache.hset(`${orderNum}`, JSON.stringify(yearCheckredisParams), 'EX', 60 * 3);
   res.json({
     status: 200,
-    orderNum,
-    result: "提交年审信息成功,请前往订单列表支付"
+    result: resData
   });
 });
 
@@ -955,5 +967,220 @@ router.post("/updateYearCheckInfo", async (req, res) => {
     respMsg: result ? "更改年审信息成功！" : "更改信息失败！"
   });
 });
+
+//旧证升级
+router.post('/upperldDogRegNum', async (req, res) => {
+  //1.判断老证提交的信息是否可以在小程序端进行升级
+  const params = req.body;
+  if (!params.openid) {
+    throw {
+      status: "0001",
+      respMsg: " lost openid"
+    };
+  }
+  if (!params.unionid) {
+    throw {
+      status: "0001",
+      respMsg: "缺失unionid！"
+    };
+  }
+  const bindWxUserInfo = await service.isWxPubBind(
+    params.unionid,
+    params.openid
+  );
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: "0001",
+      respMsg: " to bind wxpulic !"
+    };
+  }
+  const options = {
+    djhm: params.djhm || '',
+    name: params.name || '',
+    sex: params.sex || '',
+    type: params.type || '',
+    color: params.color || '',
+    birthday: params.birthday || ''
+  };
+  const canOldUpdateCount = await service.canOldUpdateCount(options);
+  if (canOldUpdateCount == 0) {
+    res.json({
+      status: 10010,
+      respMsg: "不存在旧证升级信息，请登记宠物信息!"
+    })
+    return;
+  } else if (canOldUpdateCount > 1) {
+    res.json({
+      status: 10010,
+      respMsg: " 查无信息，请到窗口办理!"
+    })
+    return;
+  }
+  /**
+   * 进行犬证升级逻辑
+   */
+
+})
+
+router.post('/addPetInfo', async (req, res) => {
+  const params = req.body;
+  if (!params.openid) {
+    throw {
+      status: "0001",
+      respMsg: " lost openid"
+    };
+  }
+  if (!params.unionid) {
+    throw {
+      status: "0001",
+      respMsg: "缺失unionid！"
+    };
+  }
+
+  // let cacheKey = `petwx_${params.openid}`;
+  // const cacheWxResCount = await cache.get(cacheKey);
+  // //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
+  // if (!cacheWxResCount) {
+  //   cache.set(cacheKey, 1, 'EX', expireTime);
+  // } else {
+  //   if (cacheWxResCount > reqCount) {
+  //     throw {
+  //       status: '0001',
+  //       respMsg: "请勿频繁提交!"
+  //     }
+  //   }
+  //   cache.incr(cacheKey);
+  // }
+  const bindWxUserInfo = await service.isWxPubBind(
+    params.unionid,
+    params.openid
+  );
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: "0001",
+      respMsg: " to bind wxpulic !"
+    };
+  }
+  const orderStatusInfo = await orderService.queryOrderStatus(params.openid, 1, '');
+  if (orderStatusInfo.length && orderStatusInfo[0].order_status == 0) {
+    throw {
+      status: 10010,
+      respMsg: `您有未支付的新登记订单，请勿多次提交登记信息！`
+    };
+  }
+  if (!params.petPhotoUrl) {
+    throw {
+      status: "0001",
+      respMsg: " lost petPhotoUrl"
+    };
+  }
+  if (!params.idNumberPic1) {
+    throw {
+      status: "0001",
+      respMsg: " lost idNumberPic1"
+    };
+  }
+  if (!params.idNumberPic2) {
+    throw {
+      status: "0001",
+      respMsg: " lost idNumberPic2"
+    };
+  }
+  if (!params.areaCode) {
+    throw {
+      respCode: "0001",
+      respMsg: " lost areaCode"
+    };
+  }
+  if (params.dogRegNum) {
+    if (!regDogRegNum.test(params.dogRegNum)) {
+      throw {
+        respCode: "0001",
+        respMsg: " dogRegNum not  correct!"
+      };
+    }
+    const result = await service.judgedogRegNum(dogRegNum);
+    if (result && result.length > 0) {
+      throw {
+        respCode: "0001",
+        respMsg: " dogRegNum has exists !"
+      };
+    }
+  }
+  if (!params.realName) {
+    throw {
+      respCode: "0001",
+      respMsg: " lost realName"
+    };
+  }
+  if (!regIdCard(params.idNumber)) {
+    throw {
+      respCode: "0001",
+      respMsg: " lost idNumber"
+    };
+  }
+  //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
+  const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
+  if (hasUserBindSysInfo.length > 0) {
+    throw {
+      respCode: "0001",
+      respMsg: "每个人只能申请一条犬证信息！"
+    };
+  }
+  if (!regPhoneNum.test(params.contactPhone)) {
+    throw {
+      respCode: "0001",
+      respMsg: " lost contactPhone"
+    };
+  }
+
+  const orderNum = `${moment().format(
+    "YYYYMMDDHHmmss"
+  )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
+  const price = await orderService.queryPrice(1);
+  const receive = parseInt(params.receive) || 0;
+  let totalPrice = 0,
+    expresscost = 0;
+  if (receive == 1) {
+    //自取
+    totalPrice = price;
+  } else if (receive == 2) {
+    //快递
+    //查询快递金额并加上
+    expresscost = await orderService.queryExpressCost();
+    totalPrice = price + expresscost;
+  } else {
+    totalPrice = 9999;
+  }
+
+  const orderModel = {
+    order_num: orderNum,
+    creator: params.openid,
+    order_status: 0,
+    create_time: moment().format("YYYY-MM-DD HH:mm:ss"),
+    order_source: 1,
+    total_price: totalPrice,
+    pet_id: petRegId,
+    expresscost
+  };
+
+  await orderService.addWxOrder(orderModel);
+  //1.调用统一下单接口
+  const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
+  const uuid = uuidTool().replace(/-/gi, "");
+  //将所有信息登记信息保存在redis中
+  const redisParams = {
+    openid: params.openid,
+    petRegId,
+    uuid,
+    params,
+    orderNum
+  }
+  cache.hset(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
+  res.json({
+    status: 200,
+    result: resData
+  })
+})
 
 module.exports = router;
