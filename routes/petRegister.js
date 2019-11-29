@@ -1197,7 +1197,7 @@ router.post('/addPetInfo', async (req, res) => {
 
   await orderService.addWxOrder(orderModel);
   //1.调用统一下单接口
-  const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
+  // const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
   const uuid = uuidTool().replace(/-/gi, "");
   //将所有信息登记信息保存在redis中
   const redisParams = {
@@ -1210,7 +1210,8 @@ router.post('/addPetInfo', async (req, res) => {
   cache.set(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
   res.json({
     status: 200,
-    result: resData
+    orderNum,
+    result: resData || ''
   })
 })
 

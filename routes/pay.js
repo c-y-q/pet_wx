@@ -117,6 +117,7 @@ router.post('/wpPay', async (req, res) => {
 })
 
 router.post('/wpPayNotify', async (req, res) => {
+    const merOrderId = req.body.orderNum;
     /*
      * 1.支付成功后的时间，即为首次登记时间
      */
@@ -141,11 +142,11 @@ router.post('/wpPayNotify', async (req, res) => {
             respMsg: " order is not exists !"
         }
     }
-    if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.wppay.mid && tid == config.wppay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
-        res.body = 'FAIL';
-        return;
-    }
-    res.body = 'SUCCESS';
+    // if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.wppay.mid && tid == config.wppay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
+    //     res.body = 'FAIL';
+    //     return;
+    // }
+    // res.body = 'SUCCESS';
     /**
      * 2.1更新订单状态
      */
