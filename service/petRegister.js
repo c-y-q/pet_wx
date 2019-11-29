@@ -514,7 +514,7 @@ exports.petexamine = async (dogRegNum) => {
     FROM
         pet_register_info 
     WHERE
-        dog_reg_num = '${dogRegNum}'`;
+        dog_reg_num = '${dogRegNum}' and pay_type != -1`;
     const result = await conn.query(sql);
     return result;
 }
