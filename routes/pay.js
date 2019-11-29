@@ -128,7 +128,6 @@ router.post('/wpPayNotify', async (req, res) => {
         mid,
         tid,
         totalAmount,
-        merOrderId,
         payTime,
         sign
     } = req.body;
