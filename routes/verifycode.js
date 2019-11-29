@@ -54,7 +54,7 @@ router.post('/verify', async (req, res) => {
                 const expireTime = 60 * 2;
                 await cache.set(phone, code, 'EX', expireTime);
                 res.json({
-                    code: "200",
+                    status: "200",
                     respMsg: '验证码发送成功!'
                   });
                 } else {

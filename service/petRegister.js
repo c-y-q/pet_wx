@@ -128,6 +128,12 @@ exports.isWxPubBind = async (unionId, openId) => {
     const result = await conn.query(sql);
     return result;
 };
+
+exports.isfree = async (dogRegNum, phone) => {
+    const sql = ` SELECT * FROM pet_register_info r LEFT JOIN pet_master m ON r.master_id = m.id WHERE r.dog_reg_num = '${dogRegNum}' and m.contact_phone = '${phone}' `;
+    const result = await conn.query(sql);
+    return result;
+}
 exports.eiditDogRegNum = async (
     dogRegNum,
     dogRegId,

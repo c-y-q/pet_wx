@@ -621,10 +621,7 @@ router.post("/queryRegList", async (req, res) => {
 router.post("/directBindDogRegNum", async (req, res) => {
   const openId = req.body.openid;
   const unionId = req.body.unionid;
-  const dogRegId = req.body.petRegId;
   const dogRegNum = req.body.dogRegNum;
-  
-
   const {
     phone,
     code
@@ -632,16 +629,19 @@ router.post("/directBindDogRegNum", async (req, res) => {
 
   const cacheWxResCount = await cache.get(phone);
   if (code == cacheWxResCount) {
-      console.log('验证通过');
-      res.json({
-          code: "200",
-          respMsg: '验证通过!'
-        });
+      const isfree = await service.isfree(dogRegNum, phone);
+      if (isfree.length > 0) {
+        console.log('验证通过!');
+      } else {
+        res.json({
+            status: 10011,
+            respMsg: '验证失败!'
+          });
+      }
   } else {
       throw {
           status: 10011,
-          respMsg: "验证失败!"
-
+          respMsg: "验证码验证失败!"
       }
 }
 
@@ -672,14 +672,14 @@ router.post("/directBindDogRegNum", async (req, res) => {
       respMsg: " dogRegNum not  correct!"
     };
   }
-  const flag = await service.isBinwxRef(dogRegNum, dogRegId, openId, unionId);
+  const flag = await service.isBinwxRef(dogRegNum, isfree[0].id, openId, unionId);
   if (flag) {
     throw {
       status: 10011,
       respMsg: " 已绑定过该号码，请勿重复绑定 !"
     };
   }
-  const judePetExists = await service.judePetExists(dogRegId);
+  const judePetExists = await service.judePetExists(isfree[0].id);
   if (!judePetExists) {
     throw {
       status: 10011,
@@ -689,7 +689,7 @@ router.post("/directBindDogRegNum", async (req, res) => {
   const result = await service.directBindDogRegNum(
     openId,
     unionId,
-    dogRegId,
+    isfree[0].id,
     dogRegNum
   );
   res.json({
