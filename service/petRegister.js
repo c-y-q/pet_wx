@@ -501,3 +501,19 @@ exports.addPetRegAllInfo = async (options) => {
     return await Promise.all([petMasterPromise, petPrevPromise, petRegInfoPromise]);
 }
 //todo： 小程序新登记审核通过的，需要在网页端插入wx_pub_petInf_rel,即小程序端绑定微信用户自己的狗证
+
+exports.petmasterexamine = async (dogRegNum) => {
+    const sql = `SELECT
+    IFNULL(id, '') AS petRegId,
+    IFNULL(replace(pet_photo_url, '${replaceImgPath}', '${imgHttp}'), '') AS petPhotoUrl,
+    IFNULL(pet_name, '') AS petName,
+    IFNULL(breed, '') AS petType,
+    IFNULL(coat_color, '') AS petColor,
+    IFNULL(gender, '') AS petGender,
+    IFNULL(dog_reg_num, '') AS dogRegNum
+    FROM
+        pet_register_info 
+    WHERE
+        dog_reg_num = '${dogRegNum}'`;
+    return await conn.query(sql);
+}

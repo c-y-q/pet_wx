@@ -1212,4 +1212,11 @@ router.post('/addPetInfo', async (req, res) => {
   })
 })
 
+// 年审
+router.post('/petmasterexamine', async (req, res) => {
+  const dogRegNum = req.body.dogRegNum;
+  const result = await service.petmasterexamine(dogRegNum);
+  return result;
+})
+
 module.exports = router;
