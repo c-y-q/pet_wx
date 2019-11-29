@@ -5,6 +5,9 @@ const multer = require("multer");
 const uuidTool = require("uuid/v4");
 const axios = require("axios");
 const orderService = require("../service/pay");
+const caches = require('../conn/redis');
+
+const { cache } = caches;
 
 function regIdCard(idcode) {
   const weight_factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
@@ -620,6 +623,30 @@ router.post("/directBindDogRegNum", async (req, res) => {
   const unionId = req.body.unionid;
   const dogRegId = req.body.petRegId;
   const dogRegNum = req.body.dogRegNum;
+  
+
+  const {
+    phone,
+    code
+  } = req.body;
+
+  const cacheWxResCount = await cache.get(phone);
+  if (code == cacheWxResCount) {
+      console.log('验证通过');
+      res.json({
+          code: "200",
+          respMsg: '验证通过!'
+        });
+  } else {
+      throw {
+          status: 10011,
+          respMsg: "验证失败!"
+
+      }
+}
+
+
+
   if (!openId || !unionId) {
     throw {
       respCode: "0001",
