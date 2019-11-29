@@ -72,12 +72,12 @@ module.exports = {
     //     reqCount: 1
     // },
     redis: {
-        config: [{
+        config: {
             port: 6300,          // Redis port
             host: '192.168.50.111',   // Redis host
             password: '123',
             db: 0,
-        }]
+        }
     },
     pay: {
         mid: "898340149000005",
