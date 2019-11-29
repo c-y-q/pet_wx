@@ -1213,10 +1213,13 @@ router.post('/addPetInfo', async (req, res) => {
 })
 
 // 年审
-router.post('/petmasterexamine', async (req, res) => {
+router.post('/querypetexamine', async (req, res) => {
   const dogRegNum = req.body.dogRegNum;
-  const result = await service.petmasterexamine(dogRegNum);
-  return result;
+  const result = await service.petexamine(dogRegNum);
+    res.json({
+      status: result.length ? 200 : 400,
+      result
+    })
 })
 
 module.exports = router;

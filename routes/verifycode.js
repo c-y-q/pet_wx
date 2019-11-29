@@ -3,11 +3,8 @@ const service = require('../service/verifycode');
 const express = require('express');
 const router = express.Router();
 const caches = require('../conn/redis');
-
-console.log('------7-----------', caches);
 const { cache } = caches;
   
-  console.log('----------36------------', cache);
 
 router.post('/verify', async (req, res) => {
 
@@ -43,9 +40,6 @@ router.post('/verify', async (req, res) => {
     const isfree = await service.isfree(phone, dogRegNum);
     console.log(52, isfree);
     if (isfree.length > 0) {
-        // const resnum = await cache.incr('string');
-        // console.log('-------------验证码限制次数----------',resnum);
-        // return;
         const cacheWxResCount = await cache.get(phone);			
         if (!cacheWxResCount) {
 
