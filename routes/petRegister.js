@@ -627,9 +627,10 @@ router.post("/directBindDogRegNum", async (req, res) => {
     code
   } = req.body;
 
+  const isfree = [];
   const cacheWxResCount = await cache.get(phone);
   if (code == cacheWxResCount) {
-      const isfree = await service.isfree(dogRegNum, phone);
+      isfree = await service.isfree(dogRegNum, phone);
       if (isfree.length > 0) {
         console.log('验证通过!');
       } else {
