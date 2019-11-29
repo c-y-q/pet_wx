@@ -10,7 +10,7 @@ module.exports = {
             port: 3306,
             user: 'root',
             password: '123456',
-            database: 'manage-sys_db',
+            database: 'manage-sys-pro-emp',
             charset: 'utf8',
             waitForConnections: true,
             connectionLimit: 10, //单次可创建最大连接数
@@ -21,7 +21,7 @@ module.exports = {
             port: 3306,
             user: 'root',
             password: '123456',
-            database: 'manage-sys_db',
+            database: 'manage-sys-pro-emp',
             charset: 'utf8',
             waitForConnections: true,
             connectionLimit: 10, //单次可创建最大连接数
@@ -32,7 +32,7 @@ module.exports = {
             port: 3306,
             user: 'root',
             password: '123456',
-            database: 'manage-sys_db',
+            database: 'manage-sys-pro-emp',
             charset: 'utf8',
             waitForConnections: true,
             connectionLimit: 10, //单次可创建最大连接数
@@ -47,29 +47,37 @@ module.exports = {
         encodingAESKey: 'olz6qa2Ew77LFRB7GVGoHraPeGvVBX3SerO0ehVIjFp',
         checkSignature: true // 可选，默认为true。由于微信公众平台接口调试工具在明文模式下不发送签名，所以如要使用该测试工具，请将其设置为false
     },
+    // redis: {
+    //     config: [{
+    //         port: 6379,
+    //         host: '172.169.1.249'
+    //     }, {
+    //         port: 6380,
+    //         host: '172.169.1.249'
+    //     }, {
+    //         port: 6379,
+    //         host: '172.169.1.248'
+    //     }, {
+    //         port: 6380,
+    //         host: '172.169.1.248'
+    //     }, {
+    //         port: 6379,
+    //         host: '172.169.1.247'
+    //     }, {
+    //         port: 6380,
+    //         host: '172.169.1.247'
+    //     }],
+    //     //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
+    //     expireTime: 60 * 3,
+    //     reqCount: 1
+    // },
     redis: {
         config: [{
-            port: 6379,
-            host: '172.169.1.249'
-        }, {
-            port: 6380,
-            host: '172.169.1.249'
-        }, {
-            port: 6379,
-            host: '172.169.1.248'
-        }, {
-            port: 6380,
-            host: '172.169.1.248'
-        }, {
-            port: 6379,
-            host: '172.169.1.247'
-        }, {
-            port: 6380,
-            host: '172.169.1.247'
-        }],
-        //限制每个微信用户每3分钟才能访问一次添加宠物注册信息
-        expireTime: 60 * 3,
-        reqCount: 1
+            port: 6300,          // Redis port
+            host: '192.168.50.111',   // Redis host
+            password: '123',
+            db: 0,
+        }]
     },
     pay: {
         mid: "898340149000005",

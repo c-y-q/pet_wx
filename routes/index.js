@@ -2,6 +2,7 @@ const service = require('../service/wxpub');
 const wechat = require('wechat');
 const conn = require('../config/config');
 module.exports = function (app) {
+    app.use('/code', require('./verifycode'));
     app.use('/pay', require('./pay'));
     app.use('/pet', require('./petRegister'));
     app.use('/wxpub/bindWxEvent', wechat(conn.wxpublic).text(function (message, req, res, next) {
