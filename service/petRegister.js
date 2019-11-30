@@ -77,7 +77,7 @@ exports.addPetregister = async (
         deliver: parseInt(options.deliver || 2),
         audit_time: options.auditTime || "",
         deliver_time: options.deliverTime || "",
-        audit_type: 1,
+        // audit_type: 1,
         latest_order_num: orderNum
     };
     return await conn.query(sql, petRegModel);
@@ -463,8 +463,8 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
     const petPrevSql =
         "update pet_prevention_img set photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ?  ";
     const petPrevUpdateResult = await conn.query(petPrevSql, [
-        options.photoUrl,
-        options.photoUrl2,
+        options.photoUrl.replace(imgHttp, imgDbPath),
+        options.photoUrl2.replace(imgHttp, imgDbPath),
         options.updateTime,
         petRegId
     ]);
@@ -520,10 +520,12 @@ exports.petexamine = async (dogRegNum) => {
 }
 //年审记录列表
 exports.queryYearCheckRecord = async (openId) => {
-    const sql = `select p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-    from pet_register_info p, sys_branch s, pet_master m
+    const sql = `select v.photo_url,v.photo_url2,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    from pet_register_info p, wx_review_record wr, pet_prevention_img v, sys_branch s, pet_master m
     where
     p.area_code = s.code  and m.id = p.master_id
+    and wr.pet_id = p.id
+    and p.id = v.pet_reg_id
     and p.wx_openId = ?
     and p.pay_type <> -1
     and p.pet_state = 3

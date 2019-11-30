@@ -963,6 +963,7 @@ router.post("/updateYearCheckInfo", async (req, res) => {
       respMsg: " to bind wxpulic !"
     };
   }
+
   const options = {
     photoUrl: req.body.photoUrl,
     photoUrl2: req.body.photoUrl2,
@@ -1209,6 +1210,12 @@ router.post('/queryYearCheckRecord', async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
+        photoUrl: (obj.photo_url &&
+            obj.photo_url.replace("/home/manage_sys/app", imgHttp)) ||
+          "",
+        photoUrl2: (obj.photo_url2 &&
+            obj.photo_url2.replace("/home/manage_sys/app", imgHttp)) ||
+          "",
         payType: obj.pay_type,
         // "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
         petColor: obj.coat_color,
