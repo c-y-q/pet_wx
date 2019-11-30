@@ -906,31 +906,6 @@ router.post("/yearCheck", async (req, res) => {
       respMsg: " dogRegNum not  correct!"
     };
   }
-  //为防止用户多次提交年审，做限制
-  // const preventionInfo = await service.findPreventionInfo(petRegId);
-  // if (preventionInfo.length == 0) {
-  //   throw {
-  //     status: 10010,
-  //     respMsg: " 该宠物信息不存在 !"
-  //   };
-  //   // expire_time,pet_state
-  // } else if (
-  //   preventionInfo.length &&
-  //   parseInt(preventionInfo[0].year) > moment().format("YYYY")
-  // ) {
-  //   throw {
-  //     status: 10010,
-  //     respMsg: `请在${preventionInfo[0].year}年进行年审信息提交！`
-  //   };
-  // }
-  //判断是否有未支付的年审订单,如果有，则不能再次年审
-  const orderStatusInfo = await orderService.queryOrderStatus(openId, 2, petRegId);
-  if (orderStatusInfo.length && orderStatusInfo[0].order_status == 0) {
-    throw {
-      status: 10010,
-      respMsg: `您有未支付的年审订单，请勿多次提交年审信息！`
-    };
-  }
   const options = {
     year: moment()
       .add(1, "years")
@@ -956,7 +931,7 @@ router.post("/yearCheck", async (req, res) => {
     expresscost: 0
   };
   await orderService.addWxOrder(orderModel);
-  const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
+  // const resData = await orderService.unfolderToPay(openId, orderNum, totalPrice);
   const yearCheckredisParams = {
     petRegId,
     params: options,
@@ -965,7 +940,8 @@ router.post("/yearCheck", async (req, res) => {
   cache.set(`${orderNum}`, JSON.stringify(yearCheckredisParams), 'EX', 60 * 3);
   res.json({
     status: 200,
-    result: resData
+    orderNum,
+    result: '' //resData
   });
 });
 
@@ -1053,7 +1029,7 @@ router.post('/upperldDogRegNum', async (req, res) => {
 
 })
 
-router.post('/addPetInfo', async (req, res) => {
+router.post('/addpetRegist', async (req, res) => {
   const params = req.body;
   if (!params.openid) {
     throw {
@@ -1092,13 +1068,13 @@ router.post('/addPetInfo', async (req, res) => {
       respMsg: " to bind wxpulic !"
     };
   }
-  const orderStatusInfo = await orderService.queryOrderStatus(params.openid, 1, '');
-  if (orderStatusInfo.length && orderStatusInfo[0].order_status == 0) {
-    throw {
-      status: 10010,
-      respMsg: `您有未支付的新登记订单，请勿多次提交登记信息！`
-    };
-  }
+  // const orderStatusInfo = await orderService.queryOrderStatus(params.openid, 1, '');
+  // if (orderStatusInfo.length && orderStatusInfo[0].order_status == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: `您有未支付的新登记订单，请勿多次提交登记信息！`
+  //   };
+  // }
   if (!params.petPhotoUrl) {
     throw {
       status: "0001",
@@ -1183,7 +1159,7 @@ router.post('/addPetInfo', async (req, res) => {
   } else {
     totalPrice = 9999;
   }
-
+  const petRegId = uuidTool().replace(/-/gi, "");
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
@@ -1211,7 +1187,7 @@ router.post('/addPetInfo', async (req, res) => {
   res.json({
     status: 200,
     orderNum,
-    result: resData || ''
+    result: ''
   })
 })
 
@@ -1219,10 +1195,60 @@ router.post('/addPetInfo', async (req, res) => {
 router.post('/querypetexamine', async (req, res) => {
   const dogRegNum = req.body.dogRegNum;
   const result = await service.petexamine(dogRegNum);
-    res.json({
-      status: result.length ? 200 : 400,
-      result
-    })
+  res.json({
+    status: result.length ? 200 : 400,
+    result
+  })
 })
 
+router.post('/queryYearCheckRecord', async (req, res) => {
+  const openId = req.body.openid;
+  const result = await service.queryYearCheckRecord(openId);
+  let petRegInfo = [];
+  if (result.length > 0) {
+    petRegInfo = result.map(obj => {
+      let checkStatus = obj.audit_status;
+      return {
+        expressname: obj.expressname || "",
+        payType: obj.pay_type,
+        // "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
+        petColor: obj.coat_color,
+        petGender: obj.gender == 1 ? "雄" : obj.gender == 2 ? "雌" : "未知",
+        petType: obj.breed,
+        petRegId: obj.id,
+        checkStatus: checkStatus, //== 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
+        auditRemarks: obj.audit_remarks,
+        areaName: obj.name || "",
+        dogRegNum: obj.dog_reg_num || 0,
+        petName: obj.pet_name || "",
+        petState: obj.pet_state,
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) : "",
+        createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
+          "YYYY-MM-DD HH:mm:ss"
+        ),
+        petPhotoUrl: (obj.pet_photo_url &&
+            obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
+          "",
+        masterName: obj.real_name || "",
+        masterAdress: obj.residential_address || "",
+        contactPhone: obj.contact_phone && obj.contact_phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") || "",
+        receive: obj.receive,
+        receiveName: obj.receive_name || "",
+        courierNumber: obj.courier_number || "",
+        receivePhone: obj.receive_phone || "",
+        receiveAddr: obj.receive_addr || "",
+        checker: obj.checker || "",
+        deliver: obj.deliver,
+        auditType: obj.audit_type
+      };
+    });
+  }
+  res.json({
+    status: 200,
+    result: petRegInfo
+  });
+})
 module.exports = router;

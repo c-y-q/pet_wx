@@ -155,16 +155,22 @@ router.post('/wpPayNotify', async (req, res) => {
     const cacheParams = await cache.get(`${merOrderId}`);
     console.log(156, cacheParams)
     if (cacheParams) {
-        const resdisParams = JSON.parse(cacheParams)
+        let addPetRegAllInfoResult, yearCheckResult;
+        const resdisParams = JSON.parse(cacheParams);
         //查询petRegId信息是否已存在wx_pet_reg_info
         const judePetExists = await registerService.petRegIdPay(orderInfo[0].pet_id);
         //2.2 支付成功后，从redis中取出数据，保存到微信表中.
         if (orderInfo[0].order_source == 1 && judePetExists.length == 0) { //新登记
             //添加新注册信息
-            await registerService.addPetRegAllInfo(resdisParams);
+            addPetRegAllInfoResult = await registerService.addPetRegAllInfo(resdisParams);
         } else if (orderInfo[0].order_source == 2) { //年审
-            await registerService.yearCheck(resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum);
+            yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum);
         }
+        res.json({
+            status: 200,
+            addPetRegAllInfoResult,
+            yearCheckResult
+        })
     }
 })
 
