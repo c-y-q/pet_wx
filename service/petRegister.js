@@ -284,6 +284,14 @@ exports.hasUserBindSysInfo = async idNumber => {
 exports.yearCheck = async (openId, petRegId, options, dogRegNum) => {
     const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ? where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type =2 where dog_reg_num = ? `;
+    const yearCheckRecordSql = 'insert into wx_review_record set ? ';
+    const yearRecordModel = {
+        pet_id: petRegId,
+        audit_status: 0,
+        checkor: '',
+        create_time: moment().format('YYYYMMDDHHmmss')
+    }
+    await conn.query(yearCheckRecordSql, yearRecordModel);
     const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, [openId, dogRegNum]);
@@ -520,7 +528,7 @@ exports.petexamine = async (dogRegNum) => {
 }
 //年审记录列表
 exports.queryYearCheckRecord = async (openId) => {
-    const sql = `select v.photo_url,v.photo_url2,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    const sql = `select v.photo_url,v.photo_url2,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wr.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
     from pet_register_info p, wx_review_record wr, pet_prevention_img v, sys_branch s, pet_master m
     where
     p.area_code = s.code  and m.id = p.master_id
