@@ -1209,7 +1209,6 @@ router.post('/queryYearCheckRecord', async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
-        expressname: obj.expressname || "",
         payType: obj.pay_type,
         // "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
         petColor: obj.coat_color,
@@ -1235,13 +1234,7 @@ router.post('/queryYearCheckRecord', async (req, res) => {
         masterName: obj.real_name || "",
         masterAdress: obj.residential_address || "",
         contactPhone: obj.contact_phone && obj.contact_phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") || "",
-        receive: obj.receive,
-        receiveName: obj.receive_name || "",
-        courierNumber: obj.courier_number || "",
-        receivePhone: obj.receive_phone || "",
-        receiveAddr: obj.receive_addr || "",
         checker: obj.checker || "",
-        deliver: obj.deliver,
         auditType: obj.audit_type
       };
     });

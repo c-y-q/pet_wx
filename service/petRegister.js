@@ -282,7 +282,7 @@ exports.hasUserBindSysInfo = async idNumber => {
 
 //年审
 exports.yearCheck = async (openId, petRegId, options, dogRegNum) => {
-    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0 ,wx_openId = ? where dog_reg_num = ? `;
+    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ? where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type =2 where dog_reg_num = ? `;
     const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
@@ -520,13 +520,13 @@ exports.petexamine = async (dogRegNum) => {
 }
 //年审记录列表
 exports.queryYearCheckRecord = async (openId) => {
-    const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    const sql = `select p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
     from pet_register_info p, sys_branch s, pet_master m
     where
     p.area_code = s.code  and m.id = p.master_id
-    and p.creator_id = ?
-        and p.pay_type < > -1
-        pet_state = 3
+    and p.wx_openId = ?
+    and p.pay_type <> -1
+    and p.pet_state = 3
     order by p.create_time desc `
     return conn.query(sql, [openId]);
 }

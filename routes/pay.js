@@ -141,6 +141,13 @@ router.post('/wpPayNotify', async (req, res) => {
             respMsg: " order is not exists !"
         }
     }
+    const cacheParams = await cache.get(`${merOrderId}`);
+    if (orderInfo.length && orderInfo[0].order_status == 1) {
+        res.json({
+            status: 200,
+        })
+        return;
+    }
     // if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.wppay.mid && tid == config.wppay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
     //     res.body = 'FAIL';
     //     return;
@@ -152,8 +159,7 @@ router.post('/wpPayNotify', async (req, res) => {
     if (orderInfo[0].order_status == 0) {
         await service.updateOrder(merOrderId, 1, payTime);
     }
-    const cacheParams = await cache.get(`${merOrderId}`);
-    console.log(156, cacheParams)
+
     if (cacheParams) {
         let addPetRegAllInfoResult, yearCheckResult;
         const resdisParams = JSON.parse(cacheParams);
@@ -172,6 +178,7 @@ router.post('/wpPayNotify', async (req, res) => {
             yearCheckResult
         })
     }
+
 })
 
 //查询当前用户所有订单
