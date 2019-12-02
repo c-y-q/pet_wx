@@ -170,7 +170,7 @@ router.post('/wpPayNotify', async (req, res) => {
             //添加新注册信息
             addPetRegAllInfoResult = await registerService.addPetRegAllInfo(resdisParams);
         } else if (orderInfo[0].order_source == 2) { //年审
-            yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum);
+            yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum, merOrderId);
         }
         res.json({
             status: 200,

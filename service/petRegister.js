@@ -281,8 +281,8 @@ exports.hasUserBindSysInfo = async idNumber => {
 };
 
 //年审
-exports.yearCheck = async (openId, petRegId, options, dogRegNum) => {
-    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ? where dog_reg_num = ? `;
+exports.yearCheck = async (openId, petRegId, options, dogRegNum, year_latest_order_num) => {
+    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ?,year_latest_order_num = ?  where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type =2 where dog_reg_num = ? `;
     const isHasYearCheckRecord = await conn.query('select * from wx_review_record');
     const yearRecordModel = {
@@ -300,7 +300,7 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum) => {
     }
     const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
-    const petRegPromise = conn.query(petRegSql, [openId, dogRegNum]);
+    const petRegPromise = conn.query(petRegSql, [openId, year_latest_order_num, dogRegNum]);
     const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const petPrevParam = [
         options.year,
