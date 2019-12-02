@@ -157,7 +157,7 @@ router.post('/wpPayNotify', async (req, res) => {
      * 2.1更新订单状态
      */
     if (orderInfo[0].order_status == 0) {
-        await service.updateOrder(merOrderId, 1, payTime);
+        await service.updateOrder(merOrderId, 1, payTime || moment().format('YYYYMMDDHHmmss'));
     }
 
     if (cacheParams) {

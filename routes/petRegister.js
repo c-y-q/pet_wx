@@ -924,7 +924,7 @@ router.post("/yearCheck", async (req, res) => {
     order_num: orderNum,
     creator: openId,
     order_status: 0,
-    create_time: moment().format("YYYY-MM-DD HH:mm:ss"),
+    create_time: moment().format("YYYYMMDDHHmmss"),
     order_source: 2,
     total_price: price,
     pet_id: petRegId,
