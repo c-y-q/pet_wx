@@ -284,14 +284,20 @@ exports.hasUserBindSysInfo = async idNumber => {
 exports.yearCheck = async (openId, petRegId, options, dogRegNum) => {
     const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ? where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type =2 where dog_reg_num = ? `;
-    const yearCheckRecordSql = 'insert into wx_review_record set ? ';
+    const isHasYearCheckRecord = await conn.query('select * from wx_review_record');
     const yearRecordModel = {
         pet_id: petRegId,
         audit_status: 0,
         checkor: '',
         create_time: moment().format('YYYYMMDDHHmmss')
     }
-    await conn.query(yearCheckRecordSql, yearRecordModel);
+    if (isHasYearCheckRecord.length == 0) {
+        const yearCheckRecordSql = 'insert into wx_review_record set ? ';
+        await conn.query(yearCheckRecordSql, yearRecordModel);
+    } else {
+        const updateYearCheckSql = 'update wx_review_record  set audit_status = 0, update_time = ?  where pet_id = ? ';
+        await conn.query(updateYearCheckSql, [moment().format('YYYYMMDDHHmmss'), petRegId]);
+    }
     const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, [openId, dogRegNum]);
