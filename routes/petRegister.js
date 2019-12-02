@@ -1259,4 +1259,55 @@ router.post('/queryYearCheckRecord', async (req, res) => {
     result: petRegInfo
   });
 })
+
+//查询是否可以旧证升级.1.已升级的不能升级，2，微信端已操作升级，网页端正在审核的不能重复升级
+router.post('isCanUpperOld', async (req, res) => {
+  const params = req.body;
+  if (!params.openid) {
+    throw {
+      status: "0001",
+      respMsg: " lost openid"
+    };
+  }
+  if (!params.unionid) {
+    throw {
+      status: "0001",
+      respMsg: "缺失unionid！"
+    };
+  }
+  const bindWxUserInfo = await service.isWxPubBind(
+    params.unionid,
+    params.openid
+  );
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: "0001",
+      respMsg: " to bind wxpulic !"
+    };
+  }
+
+  const options = {
+    djhm: params.djhm || '',
+    name: params.name || '',
+    sex: params.sex || '',
+    type: params.type || '',
+    color: params.color || '',
+    scdjsj: params.scdjsj || '',
+    birthday: params.birthday || '',
+    master_name: params.master_name || '',
+    master_address: params.master_address
+  }
+  const result = await service.isCanUpperOld(options);
+  if (result.length > 0) {
+    throw {
+      status: "0001",
+      respMsg: " 不能自行升级犬证，请到管理中心办理 !"
+    };
+  }
+  res.json({
+    status: 200,
+    respMsg: '可以升级旧犬证!'
+  })
+});
+
 module.exports = router;

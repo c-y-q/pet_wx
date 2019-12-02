@@ -546,3 +546,35 @@ exports.queryYearCheckRecord = async (openId) => {
     order by p.create_time desc `
     return conn.query(sql, [openId]);
 }
+
+exports.isCanUpperOld = async (options) => {
+    let sql = 'select * from old_pet_info where state = 1 ';
+    if (djhm) {
+        sql += ` and djhm =  ${options.djhm}`;
+    }
+    if (name) {
+        sql += ` and name =  ${options.name}`;
+    }
+    if (sex) {
+        sql += ` and sex =  ${options.sex}`;
+    }
+    if (type) {
+        sql += ` and type =  ${options.type}`;
+    }
+    if (color) {
+        sql += ` and color =  ${options.color}`;
+    }
+    if (scdjsj) {
+        sql += ` and scdjsj =  ${options.scdjsj}`;
+    }
+    if (birthday) {
+        sql += ` and birthday =  ${options.birthday}`;
+    }
+    if (master_name) {
+        sql += ` and master_name =  ${options.master_name}`;
+    }
+    if (master_address) {
+        sql += ` and master_address =  ${options.master_address}`;
+    }
+    return await conn.query(sql);
+}
