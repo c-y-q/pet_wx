@@ -906,6 +906,14 @@ router.post("/yearCheck", async (req, res) => {
       respMsg: " dogRegNum not  correct!"
     };
   }
+  //判断是否有正在审核的犬证，如果有，不能进行年审
+  const isHasYearCheck = await service.findPreventionInfo(petRegId);
+  if (isHasYearCheck[0].pet_state == 3) {
+    throw {
+      respCode: "0001",
+      respMsg: " 您有正在年审的信息，请勿重复提交!"
+    };
+  }
   const options = {
     year: moment()
       .add(1, "years")
