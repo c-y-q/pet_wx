@@ -463,7 +463,7 @@ exports.updatePetRegLatestNum = async (openid, orderNum) => {
 
 exports.findPreventionInfo = async petRegId => {
     const sql =
-        " select expire_time,pet_state from pet_register_info where pet_reg_id = ? ";
+        " select expire_time,pet_state from pet_register_info where id = ? ";
     return await conn.query(sql, [petRegId]);
 };
 //年审,审核状态不通过，更改年审信息pet_state = 3 and audit_status =2
@@ -551,8 +551,9 @@ exports.isCanUpperOld = async (options) => {
     let sql = 'select * from old_pet_info where state = 1 ';
     for (let key in options) {
         if (options[key]) {
-            sql += ` and ${key} =  ${options[key]}`;
+            sql += ` and ${key} =  '${options[key]}'`;
         }
     }
+    console.log('----sql----', sql);
     return await conn.query(sql);
 }
