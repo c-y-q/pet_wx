@@ -1018,23 +1018,30 @@ router.post('/upperldDogRegNum', async (req, res) => {
     color: params.color || '',
     birthday: params.birthday || ''
   };
-  const canOldUpdateCount = await service.canOldUpdateCount(options);
-  if (canOldUpdateCount == 0) {
-    res.json({
-      status: 10010,
-      respMsg: "不存在旧证升级信息，请登记宠物信息!"
-    })
-    return;
-  } else if (canOldUpdateCount > 1) {
-    res.json({
-      status: 10010,
-      respMsg: " 查无信息，请到窗口办理!"
-    })
-    return;
-  }
+  // const canOldUpdateCount = await service.canOldUpdateCount(options);
+  // if (canOldUpdateCount == 0) {
+  //   res.json({
+  //     status: 10010,
+  //     respMsg: "不存在旧证升级信息，请登记宠物信息!"
+  //   })
+  //   return;
+  // } else if (canOldUpdateCount > 1) {
+  //   res.json({
+  //     status: 10010,
+  //     respMsg: " 查无信息，请到窗口办理!"
+  //   })
+  //   return;
+  // }
   /**
    * 进行犬证升级逻辑
+   * 第一步:补全信息
+   * 第二步:检查信息是否完整吻合
+   * 第三步:进行升级插入数据 成功(插入新表(wx表) 生成订单号) 失败(返回错误码)
+   * 第四步:缴费
+   * 第五步:审核(修改旧证状态)
    */
+
+
 
 })
 
@@ -1261,7 +1268,7 @@ router.post('/queryYearCheckRecord', async (req, res) => {
 })
 
 //查询是否可以旧证升级.1.已升级的不能升级，2，微信端已操作升级，网页端正在审核的不能重复升级
-router.post('isCanUpperOld', async (req, res) => {
+router.post('/isCanUpperOld', async (req, res) => {
   const params = req.body;
   if (!params.openid) {
     throw {
@@ -1298,15 +1305,25 @@ router.post('isCanUpperOld', async (req, res) => {
     master_address: params.master_address
   }
   const result = await service.isCanUpperOld(options);
-  if (result.length > 0) {
+  if(result.length == 0){
     throw {
       status: "0001",
-      respMsg: " 不能自行升级犬证，请到管理中心办理 !"
+      respMsg: "该犬只不存在！"
     };
   }
+  if(result.length > 1){
+    throw {
+      status: "0001",
+      respMsg: "查询失败，请进行人工审核！"
+    };
+  }
+  const imgHttp = 'http://192.168.50.111:7001';
+  result[0].photo = result[0].photo.replace(`${process.cwd()}/home/manage_sys/app`, imgHttp);
+  console.log('---result[0].photo---', result[0].photo);
   res.json({
     status: 200,
-    respMsg: '可以升级旧犬证!'
+    respMsg: '可以升级旧犬证!',
+    result
   })
 });
 
