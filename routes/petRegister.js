@@ -1318,7 +1318,7 @@ router.post('/isCanUpperOld', async (req, res) => {
     };
   }
   const imgHttp = 'http://192.168.50.111:7001';
-  result[0].photo = result[0].photo.replace(`${process.cwd()}/home/manage_sys/app`, imgHttp);
+  // result[0].photo = result[0].photo.replace(`${process.cwd()}/home/manage_sys/app`, imgHttp);
   console.log('---result[0].photo---', result[0].photo);
   res.json({
     status: 200,
