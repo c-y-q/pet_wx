@@ -1040,7 +1040,22 @@ router.post('/upperldDogRegNum', async (req, res) => {
    * 第四步:缴费
    * 第五步:审核(修改旧证状态)
    */
-
+  const petRegId = uuidTool().replace(/-/gi, "");
+  const uuid = uuidTool().replace(/-/gi, "");
+  const information = await service.addinformation(params,petRegId,uuid);
+  console.log('---information---', information);
+  if (information && (information.pet.affectedRows == 1 && information.master.affectedRows == 1 && information.perven.affectedRows == 1 && information.order.affectedRows == 1)) {
+    res.json({
+      status: 200,
+      respMsg: "新增成功!"
+    })
+    
+    return;
+  }
+  throw {
+    status: "0001",
+    respMsg: "新增失败"
+  };
 
 
 })
@@ -1317,8 +1332,8 @@ router.post('/isCanUpperOld', async (req, res) => {
       respMsg: "查询失败，请进行人工审核！"
     };
   }
-  const imgHttp = 'http://192.168.50.111:7001';
-  // result[0].photo = result[0].photo.replace(`${process.cwd()}/home/manage_sys/app`, imgHttp);
+  const imgHttp = 'http://192.168.50.111:7001/public/oldImages/b/dog_image';
+  result[0].photo = result[0].photo.replace(`/b/dog_image`, imgHttp);
   console.log('---result[0].photo---', result[0].photo);
   res.json({
     status: 200,

@@ -4,6 +4,7 @@ const imgHttp = "http://192.168.50.111:7001";
 const imgDbPath = "/home/manage_sys/app";
 const config = require('../config/config');
 const replaceImgPath = "/home/manage_sys/app";
+const orderService = require("../service/pay");
 //const imgHttp = 'https://api.hbzner.com/dog';
 exports.findPetColor = async () => {
     const sql = `select * from pet_color`;
@@ -500,6 +501,106 @@ exports.canOldUpdateCount = async (options) => {
     //count == 0,不存在旧证升级信息，请到窗口办理
     return result[0].count;
 }
+
+exports.addinformation = async (params,petRegId,uuid) => {
+    const addpet =  this.addinformations(params,petRegId,uuid);
+    return addpet;
+},
+
+exports.addinformations = async (params,petRegId,uuid) => {
+    const orderNum = `${moment().format(
+        "YYYYMMDDHHmmss"
+      )}${new Date().getTime()}${orderService.getMyUUId(5)}`;// 生成订单号
+    const datetime = moment(new Date()).format('YYYYMMDDHHmmss')
+    const addtime = moment(new Date()).add(1, 'y').format('YYYYMMDDHHmmss')
+    const year = moment(new Date()).format('YYYY')
+    const petsql = `INSERT INTO wx_pet_register_info (
+        id,
+        pet_name,
+        gender,
+        pet_state,
+        pet_category_id,
+        breed,
+        coat_color,
+        birthday,
+        area_code,
+        first_reg_time,
+        renew_time,
+        expire_time,
+        submit_source,
+        pet_photo_url,
+        master_id,
+        creator_id,
+        create_time,
+        audit_type,
+        old_id,
+        receive_name,
+        receive_phone,
+        receive_addr,
+        receive
+    )
+    VALUES
+        ('${petRegId}','${params.petName}',${params.gender},1,0,'${params.breed}','${params.coatColor}','${params.birthday}','${params.areaCode}',
+        '${datetime}','${datetime}','${addtime}',2,'${params.petPhotoUrl}','${uuid}','${params.openid}','${datetime}',3,${params.oldId},
+        '${params.receiveName}','${params.receivePhone}','${params.receiveAddr}',${params.receive})`;
+        console.log('---petsql---', petsql);
+        
+    const mastersql = `INSERT INTO wx_pet_master (
+        id,
+        real_name,
+        id_number,
+        contact_phone,
+        residential_address,
+        creator_id,
+        create_time,
+        id_number_pic1,
+        id_number_pic2,
+        residence_permit_pic,
+        residence_permit_pic2
+        )
+        VALUES
+            ('${uuid}','${params.realName}','${params.idNumber}','${params.contactPhone}','${params.residentialAddress}','${params.openid}',
+            '${datetime}','${params.idNumberPic1}','${params.idNumberPic2}','${params.residencePermitPic}','${params.residencePermitPic2}')`;
+            console.log('---mastersql---', mastersql);
+
+    const persql = `INSERT INTO wx_pet_prevention_img (
+        year,
+        pet_reg_id,
+        photo_url,
+        creator_id,
+        create_time,
+        photo_url2
+        )
+        VALUES
+            ('${year}','${petRegId}','${params.photoUrl}','${params.openid}','${datetime}','${params.photoUrl2}')`;
+            console.log('---persql---', persql);
+
+    const ordersql = `INSERT INTO wx_order (
+        order_num,
+        creator,
+        order_status,
+        create_time,
+        order_source,
+        total_price,
+        expresscost,
+        pet_id,
+        trade_num
+        )
+        VALUES
+            ('${orderNum}','${params.openid}',0,'${datetime}',3,100,0,'${petRegId}','')`;
+    console.log('---ordersql---', ordersql);
+    const pet = await conn.query(petsql);
+    const master = await conn.query(mastersql);
+    const perven = await conn.query(persql);
+    const order = await conn.query(ordersql);
+    return {
+        pet,
+        master,
+        perven,
+        order,
+        orderNum
+    };
+},
 
 exports.addPetRegAllInfo = async (options) => {
     const {
