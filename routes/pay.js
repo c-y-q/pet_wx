@@ -159,7 +159,6 @@ router.post('/wpPayNotify', async (req, res) => {
     if (orderInfo[0].order_status == 0) {
         await service.updateOrder(merOrderId, 1, payTime || moment().format('YYYYMMDDHHmmss'));
     }
-
     if (cacheParams) {
         let addPetRegAllInfoResult, yearCheckResult;
         const resdisParams = JSON.parse(cacheParams);
@@ -171,11 +170,14 @@ router.post('/wpPayNotify', async (req, res) => {
             addPetRegAllInfoResult = await registerService.addPetRegAllInfo(resdisParams);
         } else if (orderInfo[0].order_source == 2) { //年审
             yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum, merOrderId);
+        } else if (orderInfo[0].order_source == 3) { //旧证升级
+            oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid);
         }
         res.json({
             status: 200,
             addPetRegAllInfoResult,
-            yearCheckResult
+            yearCheckResult,
+            oldUpperResult
         })
     }
 

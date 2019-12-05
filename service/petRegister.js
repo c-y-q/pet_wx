@@ -502,49 +502,72 @@ exports.canOldUpdateCount = async (options) => {
     return result[0].count;
 }
 
-exports.addinformation = async (params,petRegId,uuid) => {
-    const addpet =  this.addinformations(params,petRegId,uuid);
+exports.upperldDogRegNum = async (params, petRegId, uuid) => {
+    const addpet = this.addinformations(params, petRegId, uuid);
     return addpet;
-},
-
-exports.addinformations = async (params,petRegId,uuid) => {
-    const orderNum = `${moment().format(
-        "YYYYMMDDHHmmss"
-      )}${new Date().getTime()}${orderService.getMyUUId(5)}`;// 生成订单号
+}
+exports.addinformations = async (params, petRegId, uuid) => {
+    const orderNum = `${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}${orderService.getMyUUId(5)}`; // 生成订单号
     const datetime = moment(new Date()).format('YYYYMMDDHHmmss')
     const addtime = moment(new Date()).add(1, 'y').format('YYYYMMDDHHmmss')
-    const year = moment(new Date()).format('YYYY')
+    const year = moment(new Date()).format('YYYY');
+    //处理参数
+    const handleParams = {
+        petName: params.petName || '',
+        gender: params.gender || 0,
+        breed: params.breed || '',
+        coatColor: params.coatColor || '',
+        birthday: params.birthday || '',
+        areaCode: params.areaCode || '',
+        petPhotoUrl: params.petPhotoUrl && params.petPhotoUrl.replace(imgHttp, imgDbPath) || '',
+        openid: params.openid,
+        oldId: params.oldId || '',
+        receiveName: params.receiveName || '',
+        receivePhone: params.receivePhone || '',
+        receiveAddr: params.receiveAddr || '',
+        receive: params.receive || 1,
+        realName: params.realName || '',
+        idNumber: params.idNumber || '',
+        contactPhone: params.contactPhone || '',
+        residentialAddress: params.residentialAddress || '',
+        idNumberPic1: params.idNumberPic1 && params.idNumberPic1.replace(imgHttp, imgDbPath) || '',
+        idNumberPic2: params.idNumberPic2 && params.idNumberPic2.replace(imgHttp, imgDbPath) || '',
+        residencePermitPic: params.residencePermitPic && params.residencePermitPic.replace(imgHttp, imgDbPath) || '',
+        residencePermitPic2: params.residencePermitPic2 && params.residencePermitPic2.replace(imgHttp, imgDbPath) || '',
+        photoUrl: params.photoUrl && params.photoUrl.replace(imgHttp, imgDbPath) || '',
+        photoUrl2: params.photoUrl2 && params.photoUrl2.replace(imgHttp, imgDbPath) || ''
+
+    }
     const petsql = `INSERT INTO wx_pet_register_info (
-        id,
-        pet_name,
-        gender,
-        pet_state,
-        pet_category_id,
-        breed,
-        coat_color,
-        birthday,
-        area_code,
-        first_reg_time,
-        renew_time,
-        expire_time,
-        submit_source,
-        pet_photo_url,
-        master_id,
-        creator_id,
-        create_time,
-        audit_type,
-        old_id,
-        receive_name,
-        receive_phone,
-        receive_addr,
-        receive
-    )
-    VALUES
-        ('${petRegId}','${params.petName}',${params.gender},1,0,'${params.breed}','${params.coatColor}','${params.birthday}','${params.areaCode}',
-        '${datetime}','${datetime}','${addtime}',2,'${params.petPhotoUrl}','${uuid}','${params.openid}','${datetime}',3,${params.oldId},
-        '${params.receiveName}','${params.receivePhone}','${params.receiveAddr}',${params.receive})`;
-        console.log('---petsql---', petsql);
-        
+                            id,
+                            pet_name,
+                            gender,
+                            pet_state,
+                            pet_category_id,
+                            breed,
+                            coat_color,
+                            birthday,
+                            area_code,
+                            first_reg_time,
+                            renew_time,
+                            expire_time,
+                            submit_source,
+                            pet_photo_url,
+                            master_id,
+                            creator_id,
+                            create_time,
+                            audit_type,
+                            old_id,
+                            receive_name,
+                            receive_phone,
+                            receive_addr,
+                            receive 
+                           )
+                       VALUES
+                        ('${petRegId}','${handleParams.petName}',${handleParams.gender},1,0,'${handleParams.breed}','${handleParams.coatColor}','${handleParams.birthday}','${handleParams.areaCode}',
+                        '${datetime}','${datetime}','${addtime}',2,'${handleParams.petPhotoUrl}','${uuid}','${handleParams.openid}','${datetime}',3,${handleParams.oldId},
+                        '${handleParams.receiveName}','${handleParams.receivePhone}','${handleParams.receiveAddr}',${handleParams.receive})`;
+
     const mastersql = `INSERT INTO wx_pet_master (
         id,
         real_name,
@@ -559,9 +582,8 @@ exports.addinformations = async (params,petRegId,uuid) => {
         residence_permit_pic2
         )
         VALUES
-            ('${uuid}','${params.realName}','${params.idNumber}','${params.contactPhone}','${params.residentialAddress}','${params.openid}',
-            '${datetime}','${params.idNumberPic1}','${params.idNumberPic2}','${params.residencePermitPic}','${params.residencePermitPic2}')`;
-            console.log('---mastersql---', mastersql);
+            ('${uuid}','${handleParams.realName}','${handleParams.idNumber}','${handleParams.contactPhone}','${handleParams.residentialAddress}','${handleParams.openid}',
+            '${datetime}','${handleParams.idNumberPic1}','${handleParams.idNumberPic2}','${handleParams.residencePermitPic}','${handleParams.residencePermitPic2}')`;
 
     const persql = `INSERT INTO wx_pet_prevention_img (
         year,
@@ -572,27 +594,10 @@ exports.addinformations = async (params,petRegId,uuid) => {
         photo_url2
         )
         VALUES
-            ('${year}','${petRegId}','${params.photoUrl}','${params.openid}','${datetime}','${params.photoUrl2}')`;
-            console.log('---persql---', persql);
-
-    const ordersql = `INSERT INTO wx_order (
-        order_num,
-        creator,
-        order_status,
-        create_time,
-        order_source,
-        total_price,
-        expresscost,
-        pet_id,
-        trade_num
-        )
-        VALUES
-            ('${orderNum}','${params.openid}',0,'${datetime}',3,100,0,'${petRegId}','')`;
-    console.log('---ordersql---', ordersql);
+            ('${year}','${petRegId}','${handleParams.photoUrl}','${handleParams.openid}','${datetime}','${handleParams.photoUrl2}')`;
     const pet = await conn.query(petsql);
     const master = await conn.query(mastersql);
     const perven = await conn.query(persql);
-    const order = await conn.query(ordersql);
     return {
         pet,
         master,
@@ -600,7 +605,7 @@ exports.addinformations = async (params,petRegId,uuid) => {
         order,
         orderNum
     };
-},
+}
 
 exports.addPetRegAllInfo = async (options) => {
     const {
