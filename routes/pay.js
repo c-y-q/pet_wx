@@ -160,7 +160,7 @@ router.post('/wpPayNotify', async (req, res) => {
         await service.updateOrder(merOrderId, 1, payTime || moment().format('YYYYMMDDHHmmss'));
     }
     if (cacheParams) {
-        let addPetRegAllInfoResult, yearCheckResult;
+        let addPetRegAllInfoResult, yearCheckResult, oldUpperResult;
         const resdisParams = JSON.parse(cacheParams);
         //查询petRegId信息是否已存在wx_pet_reg_info
         const judePetExists = await registerService.petRegIdPay(orderInfo[0].pet_id);

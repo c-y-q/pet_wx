@@ -78,7 +78,7 @@ exports.addPetregister = async (
         deliver: parseInt(options.deliver || 2),
         audit_time: options.auditTime || "",
         deliver_time: options.deliverTime || "",
-        // audit_type: 1,
+        audit_type: 1,
         latest_order_num: orderNum
     };
     return await conn.query(sql, petRegModel);
@@ -100,10 +100,11 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 
 exports.queryRegStatu = async (openId) => {
     const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m
+                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m,wx_addpet_record wr
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
+                 and wr.creator = p.creator_id 
                  and p.pay_type <> -1
                  order by p.create_time desc `;
     return await conn.query(sql);
@@ -233,6 +234,7 @@ exports.queryRegList = async (openId, unionId) => {
     const result = await conn.query(resultSql, [resultRegIds]);
     return result;
 };
+
 exports.findBindPetOpenIds = async petRegIds => {
     if (petRegIds.length > 0) {
         const sql = `select * from wx_pub_petInf_rel wf where wf.pet_reg_id in (?)`;
@@ -242,6 +244,7 @@ exports.findBindPetOpenIds = async petRegIds => {
         return [];
     }
 };
+
 exports.judePetExists = async id => {
     const sql = `select id from pet_register_info where id = ? `;
     const result = await conn.query(sql, [id]);
@@ -264,6 +267,7 @@ exports.petRegIdPay = async id => {
     const result = await conn.query(sql, [id]);
     return result;
 };
+
 exports.findAllArea = async () => {
     const sql = `select * from sys_branch  where parent_code = '130401' `; //
     return await conn.query(sql);
@@ -285,20 +289,14 @@ exports.hasUserBindSysInfo = async idNumber => {
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, year_latest_order_num) => {
     const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ?,year_latest_order_num = ?  where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type =2 where dog_reg_num = ? `;
-    const isHasYearCheckRecord = await conn.query('select * from wx_review_record');
     const yearRecordModel = {
         pet_id: petRegId,
         audit_status: 0,
         checkor: '',
         create_time: moment().format('YYYYMMDDHHmmss')
     }
-    if (isHasYearCheckRecord.length == 0) {
-        const yearCheckRecordSql = 'insert into wx_review_record set ? ';
-        await conn.query(yearCheckRecordSql, yearRecordModel);
-    } else {
-        const updateYearCheckSql = 'update wx_review_record  set audit_status = 0, update_time = ?  where pet_id = ? ';
-        await conn.query(updateYearCheckSql, [moment().format('YYYYMMDDHHmmss'), petRegId]);
-    }
+    const yearCheckRecordSql = 'insert into wx_review_record set ? ';
+    await conn.query(yearCheckRecordSql, yearRecordModel);
     const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, [openId, year_latest_order_num, dogRegNum]);
@@ -421,8 +419,8 @@ exports.updatePetRegInfo = async options => {
     ]);
 
     const petRegSql = `update wx_pet_register_info  set audit_status = ? ,pet_name = ?, gender = ?,breed = ?,coat_color = ?,
-                        birthday = ?,area_code = ?,pet_photo_url = ?,update_time = ?,receive = ?,receive_name = ?,
-                        courier_number = ?,receive_phone = ?,receive_addr = ?,deliver = ? where id = ? `;
+                        birthday = ?,area_code = ?,pet_photo_url = ?,update_time = ?
+                       where id = ? `;
     const petRegModel = [
         0,
         options.petName || "",
@@ -433,12 +431,6 @@ exports.updatePetRegInfo = async options => {
         options.areaCode || "",
         options.petPhotoUrl.replace(imgHttp, imgDbPath) || "",
         moment().format("YYYYMMDDHHmmss"),
-        parseInt(options.receive || 1),
-        options.receiveName || "",
-        options.courierNumber || "",
-        options.receivePhone || "",
-        options.receiveAddr || "",
-        parseInt(options.deliver || 2),
         options.petRegId
     ];
     const petRegUpdatePromise = conn.query(petRegSql, petRegModel);
@@ -618,7 +610,15 @@ exports.addPetRegAllInfo = async (options) => {
     const petMasterPromise = this.addPetMaster(openid, uuid, params);
     const petPrevPromise = this.addPetPreventionInfo(openid, petRegId, params);
     const petRegInfoPromise = this.addPetregister(openid, petRegId, uuid, params, orderNum);
-    return await Promise.all([petMasterPromise, petPrevPromise, petRegInfoPromise]);
+    const addpetRecordModel = {
+        pet_id: petRegId,
+        audit_status: 0,
+        checkor: '',
+        create_time: moment().format('YYYYMMDDHHmmss')
+    }
+    const addpetRecordSql = 'insert into wx_addpet_record set ? ';
+    const addpetRecordPromise = conn.query(addpetRecordSql, addpetRecordModel);
+    return await Promise.all([petMasterPromise, petPrevPromise, petRegInfoPromise, addpetRecordPromise]);
 }
 //todo： 小程序新登记审核通过的，需要在网页端插入wx_pub_petInf_rel,即小程序端绑定微信用户自己的狗证
 

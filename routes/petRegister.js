@@ -926,7 +926,6 @@ router.post("/yearCheck", async (req, res) => {
     "YYYYMMDDHHmmss"
   )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   // const yearCheckResult = await service.yearCheck(petRegId, options, dogRegNum);
-
   const price = await orderService.queryPrice(2);
   const orderModel = {
     order_num: orderNum,
@@ -1061,7 +1060,6 @@ router.post('/upperldDogRegNum', async (req, res) => {
   } else {
     totalPrice = 9999;
   }
-  const petRegId = uuidTool().replace(/-/gi, "");
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
@@ -1076,7 +1074,6 @@ router.post('/upperldDogRegNum', async (req, res) => {
   await orderService.addWxOrder(orderModel);
   //1.调用统一下单接口
   // const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
-  const uuid = uuidTool().replace(/-/gi, "");
   //将所有信息登记信息保存在redis中
   const redisParams = {
     petRegId,
