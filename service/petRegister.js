@@ -99,12 +99,12 @@ exports.addPetPreventionInfo = async (creatorId, petRegId, options) => {
 };
 
 exports.queryRegStatu = async (openId) => {
-    const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wr.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m,wx_addpet_record wr
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
-                 and wr.creator = p.creator_id 
+                 and wr.pet_id = p.id 
                  and p.pay_type <> -1
                  order by p.create_time desc `;
     return await conn.query(sql);
@@ -293,7 +293,8 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, year_latest_ord
         pet_id: petRegId,
         audit_status: 0,
         checkor: '',
-        create_time: moment().format('YYYYMMDDHHmmss')
+        create_time: moment().format('YYYYMMDDHHmmss'),
+        creator: openId
     }
     const yearCheckRecordSql = 'insert into wx_review_record set ? ';
     await conn.query(yearCheckRecordSql, yearRecordModel);
@@ -467,6 +468,11 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
     if (petRegInfo.length == 0) {
         return false;
     }
+    const updateSql1 = ' update pet_register_info set audit_status = 0 where id = ?';
+    await conn.query(updateSql1, [petRegId]);
+    //更改年审记录
+    const updateSql2 = 'update  wx_review_record set  audit_status = 0 where pet_id = ? ';
+    await await conn.query(updateSql2, [petRegId]);
     const petPrevSql =
         "update pet_prevention_img set photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ?  ";
     const petPrevUpdateResult = await conn.query(petPrevSql, [
@@ -614,7 +620,8 @@ exports.addPetRegAllInfo = async (options) => {
         pet_id: petRegId,
         audit_status: 0,
         checkor: '',
-        create_time: moment().format('YYYYMMDDHHmmss')
+        create_time: moment().format('YYYYMMDDHHmmss'),
+        creator: openid
     }
     const addpetRecordSql = 'insert into wx_addpet_record set ? ';
     const addpetRecordPromise = conn.query(addpetRecordSql, addpetRecordModel);
@@ -648,9 +655,8 @@ exports.queryYearCheckRecord = async (openId) => {
     and p.id = v.pet_reg_id
     and p.wx_openId = ?
     and p.pay_type <> -1
-    and p.pet_state = 3
     order by p.create_time desc `
-    return conn.query(sql, [openId]);
+    return await conn.query(sql, [openId]);
 }
 
 exports.isCanUpperOld = async (options) => {
