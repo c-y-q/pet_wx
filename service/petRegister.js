@@ -296,8 +296,15 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, year_latest_ord
         create_time: moment().format('YYYYMMDDHHmmss'),
         creator: openId
     }
-    const yearCheckRecordSql = 'insert into wx_review_record set ? ';
-    await conn.query(yearCheckRecordSql, yearRecordModel);
+    const isHasYearCheckRecordSql = 'select * from wx_review_record  where pet_id = ?';
+    const isHasYearCheckResult = await conn.query(isHasYearCheckRecordSql, [petRegId]);
+    if (isHasYearCheckResult.length == 0) {
+        const yearCheckRecordSql = 'insert into wx_review_record set ? ';
+        await conn.query(yearCheckRecordSql, yearRecordModel);
+    } else {
+        const reviewRecordSql = ` update  wx_review_record set audit_status = 2   where pet_id = ? `;
+        await conn.query(reviewRecordSql, [petRegId]);
+    }
     const petRegParam = [dogRegNum];
     const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
     const petRegPromise = conn.query(petRegSql, [openId, year_latest_order_num, dogRegNum]);
@@ -389,6 +396,8 @@ exports.updatePetRegInfo = async options => {
     //更具petRegId查找宠物主人id
     const sql = "select master_id from wx_pet_register_info where id = ? ";
     const petRegMaster = await conn.query(sql, [options.petRegId]);
+    const addRecordSql = 'update  wx_addpet_record set audit_status = 0   where pet_id =? ';
+    await conn.query(addRecordSql, [options.petRegId]);
     if (!petRegMaster.length) {
         return [];
     }
