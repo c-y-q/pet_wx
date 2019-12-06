@@ -73,16 +73,16 @@ module.exports = {
     // },
     redis: {
         config: {
-            port: 6300,          // Redis port
-            host: '192.168.50.111',   // Redis host
+            port: 6300, // Redis port
+            host: '192.168.50.111', // Redis host
             password: '123',
             db: 0,
         }
     },
     pay: {
-        mid: "898340149000005",
+        mid: "898130448161058",
         merchantUserId: "898340149000005",
-        tid: "88880001",
+        tid: "04936645",
         Authorization: 'Authorization'
     }
 }

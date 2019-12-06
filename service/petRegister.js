@@ -286,28 +286,28 @@ exports.hasUserBindSysInfo = async idNumber => {
 };
 
 //年审
-exports.yearCheck = async (openId, petRegId, options, dogRegNum, year_latest_order_num) => {
-    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ?,year_latest_order_num = ?  where dog_reg_num = ? `;
-    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type =2 where dog_reg_num = ? `;
+exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
+    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ?  where dog_reg_num = ? `;
+    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
         pet_id: petRegId,
         audit_status: 0,
         checkor: '',
         create_time: moment().format('YYYYMMDDHHmmss'),
-        creator: openId
+        creator: openId,
+        order_num: orderNum
     }
-    const isHasYearCheckRecordSql = ' select * from wx_review_record  where pet_id = ? ';
-    const isHasYearCheckResult = await conn.query(isHasYearCheckRecordSql, [petRegId]);
-    if (isHasYearCheckResult.length == 0) {
-        const yearCheckRecordSql = 'insert into wx_review_record set ? ';
-        await conn.query(yearCheckRecordSql, yearRecordModel);
-    } else {
-        const reviewRecordSql = ` update  wx_review_record set audit_status = 0   where pet_id = ? `;
-        await conn.query(reviewRecordSql, [petRegId]);
-    }
-    const petRegParam = [dogRegNum];
-    const wxPetRegPromise = conn.query(wxPetRegSql, petRegParam);
-    const petRegPromise = conn.query(petRegSql, [openId, year_latest_order_num, dogRegNum]);
+    // const isHasYearCheckRecordSql = ' select * from wx_review_record  where pet_id = ? ';
+    // const isHasYearCheckResult = await conn.query(isHasYearCheckRecordSql, [petRegId]);
+    // if (isHasYearCheckResult.length == 0) {
+    const yearCheckRecordSql = ' insert into wx_review_record set ? ';
+    await conn.query(yearCheckRecordSql, yearRecordModel);
+    // } else {
+    //     const reviewRecordSql = ` update  wx_review_record set audit_status = 0   where pet_id = ? `;
+    //     await conn.query(reviewRecordSql, [petRegId]);
+    // }
+    const wxPetRegPromise = conn.query(wxPetRegSql, [orderNum, dogRegNum]);
+    const petRegPromise = conn.query(petRegSql, [openId, orderNum, dogRegNum]);
     const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const petPrevParam = [
         options.year,
@@ -662,9 +662,9 @@ exports.queryYearCheckRecord = async (openId) => {
     p.area_code = s.code  and m.id = p.master_id
     and wr.pet_id = p.id
     and p.id = v.pet_reg_id
-    and p.wx_openId = ?
+    and wr.creator = ?
     and p.pay_type <> -1
-    order by p.create_time desc `
+    order by wr.create_time desc `
     return await conn.query(sql, [openId]);
 }
 
