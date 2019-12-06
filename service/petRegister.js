@@ -296,13 +296,13 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, year_latest_ord
         create_time: moment().format('YYYYMMDDHHmmss'),
         creator: openId
     }
-    const isHasYearCheckRecordSql = 'select * from wx_review_record  where pet_id = ?';
+    const isHasYearCheckRecordSql = ' select * from wx_review_record  where pet_id = ? ';
     const isHasYearCheckResult = await conn.query(isHasYearCheckRecordSql, [petRegId]);
     if (isHasYearCheckResult.length == 0) {
         const yearCheckRecordSql = 'insert into wx_review_record set ? ';
         await conn.query(yearCheckRecordSql, yearRecordModel);
     } else {
-        const reviewRecordSql = ` update  wx_review_record set audit_status = 2   where pet_id = ? `;
+        const reviewRecordSql = ` update  wx_review_record set audit_status = 0   where pet_id = ? `;
         await conn.query(reviewRecordSql, [petRegId]);
     }
     const petRegParam = [dogRegNum];
