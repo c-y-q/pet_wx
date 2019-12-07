@@ -287,6 +287,7 @@ exports.hasUserBindSysInfo = async idNumber => {
 
 //年审
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
+    console.log(290, options)
     const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2  where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
