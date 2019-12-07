@@ -974,7 +974,8 @@ router.post("/updateYearCheckInfo", async (req, res) => {
   const options = {
     photoUrl: req.body.photoUrl,
     photoUrl2: req.body.photoUrl2,
-    updateTime: moment().format("YYYYMMDDHHmmss")
+    updateTime: moment().format("YYYYMMDDHHmmss"),
+    orderNum: req.body.orderNum
   };
   const result = await service.updateYearCheckInfo(petRegId, options);
   res.json({
@@ -1269,6 +1270,7 @@ router.post('/queryYearCheckRecord', async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
+        orderNum: obj.order_num,
         photoUrl: (obj.photo_url &&
             obj.photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",

@@ -287,13 +287,14 @@ exports.hasUserBindSysInfo = async idNumber => {
 
 //年审
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
-    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2 ,wx_openId = ?  where dog_reg_num = ? `;
+    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2  where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
         pet_id: petRegId,
         audit_status: 0,
         checkor: '',
         create_time: moment().format('YYYYMMDDHHmmss'),
+        update_time: moment().format('YYYYMMDDHHmmss'),
         creator: openId,
         order_num: orderNum
     }
@@ -307,8 +308,8 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
     //     await conn.query(reviewRecordSql, [petRegId]);
     // }
     const wxPetRegPromise = conn.query(wxPetRegSql, [orderNum, dogRegNum]);
-    const petRegPromise = conn.query(petRegSql, [openId, orderNum, dogRegNum]);
-    const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
+    const petRegPromise = conn.query(petRegSql, [dogRegNum]);
+    const wxPetPrevSql = `update pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const petPrevParam = [
         options.year,
         options.photoUrl,
@@ -471,17 +472,20 @@ exports.findPreventionInfo = async petRegId => {
 };
 //年审,审核状态不通过，更改年审信息pet_state = 3 and audit_status =2
 exports.updateYearCheckInfo = async (petRegId, options) => {
-    const sql =
-        " select id from pet_register_info where id = ? and pet_state = 3 and audit_status = 2  ";
-    const petRegInfo = await conn.query(sql, [petRegId]);
-    if (petRegInfo.length == 0) {
-        return false;
-    }
-    const updateSql1 = ' update pet_register_info set audit_status = 0 where id = ?';
+    console.log(475, options);
+    // const sql =
+    //     " select id from pet_register_info where id = ? and pet_state = 3 and audit_status = 2  ";
+
+    // console.log(477, sql)
+    // const petRegInfo = await conn.query(sql, [petRegId]);
+    // if (petRegInfo.length == 0) {
+    //     return false;
+    // }
+    const updateSql1 = ` update pet_register_info set audit_status = 0, audit_remarks = '' where id = ? `;
     await conn.query(updateSql1, [petRegId]);
     //更改年审记录
-    const updateSql2 = 'update  wx_review_record set  audit_status = 0 where pet_id = ? ';
-    await await conn.query(updateSql2, [petRegId]);
+    const updateSql2 = 'update  wx_review_record set  audit_status = 0, update_time = ?  where pet_id = ? and order_num = ? ';
+    await await conn.query(updateSql2, [moment().format('YYYYMMDDHHmmss'), petRegId, options.orderNum]);
     const petPrevSql =
         "update pet_prevention_img set photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ?  ";
     const petPrevUpdateResult = await conn.query(petPrevSql, [
@@ -656,7 +660,7 @@ exports.petexamine = async (dogRegNum) => {
 }
 //年审记录列表
 exports.queryYearCheckRecord = async (openId) => {
-    const sql = `select v.photo_url,v.photo_url2,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wr.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+    const sql = `select wr.order_num,v.photo_url,v.photo_url2,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wr.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,wr.update_time create_time,p.pet_photo_url 
     from pet_register_info p, wx_review_record wr, pet_prevention_img v, sys_branch s, pet_master m
     where
     p.area_code = s.code  and m.id = p.master_id
@@ -664,7 +668,7 @@ exports.queryYearCheckRecord = async (openId) => {
     and p.id = v.pet_reg_id
     and wr.creator = ?
     and p.pay_type <> -1
-    order by wr.create_time desc `
+    order by wr.update_time desc `
     return await conn.query(sql, [openId]);
 }
 
