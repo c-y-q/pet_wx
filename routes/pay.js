@@ -69,7 +69,6 @@ router.post('/wpPay', async (req, res) => {
         tid: tid,
         instMid: "MINIDEFAULT",
         totalAmount: orderInfo[0].total_price * 100, //单位为分
-        subOpenId: openid,
         openid: openid,
         tradeType: "MINI",
         merchantUserId: merchantUserId,
@@ -117,7 +116,7 @@ router.post('/wpPay', async (req, res) => {
         }
         const resData = {
             appId: data.data.miniPayRequest.appid,
-            nonceStr: data.data.miniPayRequest.noncestr,
+            nonceStr: data.data.miniPayRequest.nonceStr,
             package: data.data.miniPayRequest.package,
             signType: data.data.miniPayRequest.signType,
             timeStamp: data.data.miniPayRequest.timeStamp,
