@@ -3,6 +3,7 @@ const moment = require('moment');
 const config = require('../config/config');
 const axios = require("axios");
 const uuidTool = require("uuid/v4");
+const md5 = require('md5-hex');
 const chars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
 exports.getMyUUId = n => {
     let str = '';
@@ -77,7 +78,8 @@ exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
         Authorization,
         mid,
         merchantUserId,
-        tid
+        tid,
+        md5Keys
     } = config.wppay;
     const params = {
         msgId: uuidTool().replace(/-/gi, ''),
@@ -93,9 +95,29 @@ exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
         msgType: "WXPay",
         msgSrc: "WWW.TEST.COM",
         msgSrcId: "3194",
-        notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify"
+        notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify",
+        md5Key:md5Keys
     }
 
+    /**
+     * 传入对象 ,返回对象的属性数组
+     */
+    let rest = {};
+    const keyArray = Object.keys(params).sort();
+    for (const key of keyArray) {
+        rest[key] = signStr[key];
+    }
+
+    /**
+    * 输入排序过后的key=value 值数组,用  "&" 字符拼接为字符串
+    */
+    let longStr = '';
+    for (const str in rest) {
+        longStr += str + '=' + rest[str] + '&';
+    }
+    const signs = md5(longStr.substring(0, longStr.length - 1));// 移除最后一个 & 符号
+    longStr = longStr + '&sign=' + signs
+    console.log(120, longStr);
     const requestOptins = {
         method: 'POST',
         headers: {
