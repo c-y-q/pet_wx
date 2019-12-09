@@ -1018,21 +1018,6 @@ router.post('/upperldDogRegNum', async (req, res) => {
     color: params.color || '',
     birthday: params.birthday || ''
   };
-  const canOldUpdateCount = await service.canOldUpdateCount(options);
-  if (canOldUpdateCount == 0) {
-    res.json({
-      status: 10010,
-      respMsg: "不存在旧证升级信息!"
-    })
-    return;
-  } else if (canOldUpdateCount > 1) {
-    res.json({
-      status: 10010,
-      respMsg: " 信息异常，请到窗口办理!"
-    })
-    return;
-  }
-
   /**
    * 进行犬证升级逻辑
    * 第一步:补全信息
@@ -1350,26 +1335,22 @@ router.post('/isCanUpperOld', async (req, res) => {
     master_name: params.master_name || '',
     master_address: params.master_address
   }
-  const result = await service.isCanUpperOld(options);
-  if (result.length == 0) {
+  const canUpperCount = await service.canOldUpdateCount(options);
+  if (canUpperCount == 0) {
     throw {
       status: "0001",
       respMsg: "该犬只不存在！"
     };
   }
-  if (result.length > 1) {
+  if (canUpperCount > 1) {
     throw {
       status: "0001",
       respMsg: "查询失败，请进行人工审核！"
     };
   }
-  const imgHttp = 'http://192.168.50.111:7001/public/oldImages/b/dog_image';
-  result[0].photo = result[0].photo.replace(`/b/dog_image`, imgHttp);
-  console.log('---result[0].photo---', result[0].photo);
   res.json({
     status: 200,
-    respMsg: '可以升级旧犬证!',
-    result
+    respMsg: '可以升级旧犬证!'
   })
 });
 

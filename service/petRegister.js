@@ -473,15 +473,6 @@ exports.findPreventionInfo = async petRegId => {
 };
 //年审,审核状态不通过，更改年审信息pet_state = 3 and audit_status =2
 exports.updateYearCheckInfo = async (petRegId, options) => {
-    console.log(475, options);
-    // const sql =
-    //     " select id from pet_register_info where id = ? and pet_state = 3 and audit_status = 2  ";
-
-    // console.log(477, sql)
-    // const petRegInfo = await conn.query(sql, [petRegId]);
-    // if (petRegInfo.length == 0) {
-    //     return false;
-    // }
     const updateSql1 = ` update pet_register_info set audit_status = 0, audit_remarks = '' where id = ? `;
     await conn.query(updateSql1, [petRegId]);
     //更改年审记录
@@ -499,18 +490,19 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
 };
 
 exports.canOldUpdateCount = async (options) => {
-    const sql = `select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
-                 where state = 1 
-                 and djhm = ?,
-                 and name = ?,
-                 and sex = ? ,
-                 and type = ?,
-                 and color = ?,
-                 and birthday = ? 
-                 GROUP BY djhm,name,sex,type,color,birthday `;
-    const result = await conn.query(sql, [options.djhm, options.name, options.sex, options.type, options.color, options.birthday]);
-    //count > 1,查无信息，起窗口办理
-    //count == 0,不存在旧证升级信息，请到窗口办理
+    let querySql = `select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
+                    where state = 1  `;
+    let groupSql = ' GROUP BY  ';
+    for (let key in options) {
+        if (options[key]) {
+            querySql += ` and ${key} = '${options[key]}' `;
+            groupSql += `${key},`;
+        }
+    }
+    groupSql = groupSql.slice(0, -1);
+    const resultSql = querySql + groupSql;
+    console.log(504, resultSql)
+    const result = await conn.query(resultSql);
     return result[0].count;
 }
 
@@ -614,7 +606,6 @@ exports.addinformations = async (params, petRegId, uuid) => {
         pet,
         master,
         perven,
-        order,
         orderNum
     };
 }
