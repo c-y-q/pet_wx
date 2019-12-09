@@ -926,7 +926,6 @@ router.post("/yearCheck", async (req, res) => {
     "YYYYMMDDHHmmss"
   )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
   // const yearCheckResult = await service.yearCheck(petRegId, options, dogRegNum);
-
   const price = await orderService.queryPrice(2);
   const orderModel = {
     order_num: orderNum,
@@ -975,7 +974,8 @@ router.post("/updateYearCheckInfo", async (req, res) => {
   const options = {
     photoUrl: req.body.photoUrl,
     photoUrl2: req.body.photoUrl2,
-    updateTime: moment().format("YYYYMMDDHHmmss")
+    updateTime: moment().format("YYYYMMDDHHmmss"),
+    orderNum: req.body.orderNum
   };
   const result = await service.updateYearCheckInfo(petRegId, options);
   res.json({
@@ -1018,20 +1018,21 @@ router.post('/upperldDogRegNum', async (req, res) => {
     color: params.color || '',
     birthday: params.birthday || ''
   };
-  // const canOldUpdateCount = await service.canOldUpdateCount(options);
-  // if (canOldUpdateCount == 0) {
-  //   res.json({
-  //     status: 10010,
-  //     respMsg: "不存在旧证升级信息，请登记宠物信息!"
-  //   })
-  //   return;
-  // } else if (canOldUpdateCount > 1) {
-  //   res.json({
-  //     status: 10010,
-  //     respMsg: " 查无信息，请到窗口办理!"
-  //   })
-  //   return;
-  // }
+  const canOldUpdateCount = await service.canOldUpdateCount(options);
+  if (canOldUpdateCount == 0) {
+    res.json({
+      status: 10010,
+      respMsg: "不存在旧证升级信息!"
+    })
+    return;
+  } else if (canOldUpdateCount > 1) {
+    res.json({
+      status: 10010,
+      respMsg: " 信息异常，请到窗口办理!"
+    })
+    return;
+  }
+
   /**
    * 进行犬证升级逻辑
    * 第一步:补全信息
@@ -1042,22 +1043,51 @@ router.post('/upperldDogRegNum', async (req, res) => {
    */
   const petRegId = uuidTool().replace(/-/gi, "");
   const uuid = uuidTool().replace(/-/gi, "");
-  const information = await service.addinformation(params,petRegId,uuid);
-  console.log('---information---', information);
-  if (information && (information.pet.affectedRows == 1 && information.master.affectedRows == 1 && information.perven.affectedRows == 1 && information.order.affectedRows == 1)) {
-    res.json({
-      status: 200,
-      respMsg: "新增成功!"
-    })
-    
-    return;
+  const orderNum = `${moment().format(
+    "YYYYMMDDHHmmss"
+  )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
+  const price = await orderService.queryPrice(3);
+  const receive = parseInt(params.receive) || 0;
+  let totalPrice = 0,
+    expresscost = 0;
+  if (receive == 1) {
+    //自取
+    totalPrice = price;
+  } else if (receive == 2) {
+    //快递
+    //查询快递金额并加上
+    expresscost = await orderService.queryExpressCost();
+    totalPrice = price + expresscost;
+  } else {
+    totalPrice = 9999;
   }
-  throw {
-    status: "0001",
-    respMsg: "新增失败"
+  const orderModel = {
+    order_num: orderNum,
+    creator: params.openid,
+    order_status: 0,
+    create_time: moment().format("YYYY-MM-DD HH:mm:ss"),
+    order_source: 3,
+    total_price: totalPrice,
+    pet_id: petRegId,
+    expresscost
   };
 
-
+  await orderService.addWxOrder(orderModel);
+  //1.调用统一下单接口
+  // const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
+  //将所有信息登记信息保存在redis中
+  const redisParams = {
+    petRegId,
+    uuid,
+    params
+  }
+  cache.set(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
+  res.json({
+    status: 200,
+    orderNum,
+    result: ''
+  })
+  // const information = await service.addInfoPetToWx(params, petRegId, uuid);
 })
 
 router.post('/addpetRegist', async (req, res) => {
@@ -1240,6 +1270,7 @@ router.post('/queryYearCheckRecord', async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
+        orderNum: obj.order_num,
         photoUrl: (obj.photo_url &&
             obj.photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
@@ -1320,20 +1351,20 @@ router.post('/isCanUpperOld', async (req, res) => {
     master_address: params.master_address
   }
   const result = await service.isCanUpperOld(options);
-  if(result.length == 0){
+  if (result.length == 0) {
     throw {
       status: "0001",
       respMsg: "该犬只不存在！"
     };
   }
-  if(result.length > 1){
+  if (result.length > 1) {
     throw {
       status: "0001",
       respMsg: "查询失败，请进行人工审核！"
     };
   }
-  const imgHttp = 'http://192.168.50.111:7001/public/oldImages/b/dog_image';
-  result[0].photo = result[0].photo.replace(`/b/dog_image`, imgHttp);
+  const imgHttp = 'http://192.168.50.111:7001/public/oldImages/b/dog_image';
+  result[0].photo = result[0].photo.replace(`/b/dog_image`, imgHttp);
   console.log('---result[0].photo---', result[0].photo);
   res.json({
     status: 200,
