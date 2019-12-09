@@ -169,9 +169,10 @@ router.post("/addpetRegist2", async (req, res, next) => {
     };
   }
   const uuid = uuidTool().replace(/-/gi, "");
-  const orderNum = `${moment().format(
-    "YYYYMMDDHHmmss"
-  )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
+  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  // const orderNum = `${moment().format(
+  //   "YYYYMMDDHHmmss"
+  // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
   const addPetMasterResult = await service.addPetMaster(
     params.openid,
     uuid,
@@ -922,9 +923,10 @@ router.post("/yearCheck", async (req, res) => {
     photoUrl2: req.body.photoUrl2,
     updateTime: moment().format("YYYYMMDDHHmmss")
   };
-  const orderNum = `${moment().format(
-    "YYYYMMDDHHmmss"
-  )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
+  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  // const orderNum = `${moment().format(
+  //   "YYYYMMDDHHmmss"
+  // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
   // const yearCheckResult = await service.yearCheck(petRegId, options, dogRegNum);
   const price = await orderService.queryPrice(2);
   const orderModel = {
@@ -988,6 +990,7 @@ router.post("/updateYearCheckInfo", async (req, res) => {
 router.post('/upperldDogRegNum', async (req, res) => {
   //1.判断老证提交的信息是否可以在小程序端进行升级
   const params = req.body;
+  const oldId = req.body.oldId;
   if (!params.openid) {
     throw {
       status: "0001",
@@ -1028,9 +1031,10 @@ router.post('/upperldDogRegNum', async (req, res) => {
    */
   const petRegId = uuidTool().replace(/-/gi, "");
   const uuid = uuidTool().replace(/-/gi, "");
-  const orderNum = `${moment().format(
-    "YYYYMMDDHHmmss"
-  )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
+  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  // const orderNum = `${moment().format(
+  //   "YYYYMMDDHHmmss"
+  // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
   const price = await orderService.queryPrice(3);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
@@ -1186,10 +1190,10 @@ router.post('/addpetRegist', async (req, res) => {
       respMsg: " lost contactPhone"
     };
   }
-
-  const orderNum = `${moment().format(
-    "YYYYMMDDHHmmss"
-  )}${new Date().getTime()}${orderService.getMyUUId(5)}`;
+  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  // const orderNum = `${moment().format(
+  //   "YYYYMMDDHHmmss"
+  // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
   const price = await orderService.queryPrice(1);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
@@ -1348,9 +1352,13 @@ router.post('/isCanUpperOld', async (req, res) => {
       respMsg: "查询失败，请进行人工审核！"
     };
   }
+  const result = await service.isCanUpperOld(options);
+  const imgHttp = 'http://192.168.50.111:7001/public/oldImages/b/dog_image';
+  result[0].photo = result[0].photo.replace(`/b/dog_image`, imgHttp);
   res.json({
     status: 200,
-    respMsg: '可以升级旧犬证!'
+    respMsg: '可以升级旧犬证!',
+    result
   })
 });
 

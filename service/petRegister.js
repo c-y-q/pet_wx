@@ -490,8 +490,8 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
 };
 
 exports.canOldUpdateCount = async (options) => {
-    let querySql = `select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
-                    where state = 1  `;
+    let querySql = ` select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
+                     where state = 1  `;
     let groupSql = ' GROUP BY  ';
     for (let key in options) {
         if (options[key]) {
@@ -503,7 +503,8 @@ exports.canOldUpdateCount = async (options) => {
     const resultSql = querySql + groupSql;
     console.log(504, resultSql)
     const result = await conn.query(resultSql);
-    return result[0].count;
+    console.log(506, result)
+    return result[0] && result[0].count || 0;
 }
 
 exports.upperldDogRegNum = async (params, petRegId, uuid) => {
@@ -511,6 +512,10 @@ exports.upperldDogRegNum = async (params, petRegId, uuid) => {
     return addpet;
 }
 exports.addinformations = async (params, petRegId, uuid) => {
+    const oldId = params.oldId;
+    //更新已升级的状态
+    const updateOldPetSql = 'update old_pet_info set state = 2 where id = ? ';
+    await conn.query(updateOldPetSql, [oldId]);
     const orderNum = `${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}${orderService.getMyUUId(5)}`; // 生成订单号
     const datetime = moment(new Date()).format('YYYYMMDDHHmmss')
     const addtime = moment(new Date()).add(1, 'y').format('YYYYMMDDHHmmss')
@@ -626,7 +631,8 @@ exports.addPetRegAllInfo = async (options) => {
         audit_status: 0,
         checkor: '',
         create_time: moment().format('YYYYMMDDHHmmss'),
-        creator: openid
+        creator: openid,
+        order_num: orderNum
     }
     const addpetRecordSql = 'insert into wx_addpet_record set ? ';
     const addpetRecordPromise = conn.query(addpetRecordSql, addpetRecordModel);
