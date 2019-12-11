@@ -169,7 +169,7 @@ router.post("/addpetRegist2", async (req, res, next) => {
     };
   }
   const uuid = uuidTool().replace(/-/gi, "");
-  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
@@ -923,7 +923,7 @@ router.post("/yearCheck", async (req, res) => {
     photoUrl2: req.body.photoUrl2,
     updateTime: moment().format("YYYYMMDDHHmmss")
   };
-  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
@@ -1031,7 +1031,7 @@ router.post('/upperldDogRegNum', async (req, res) => {
    */
   const petRegId = uuidTool().replace(/-/gi, "");
   const uuid = uuidTool().replace(/-/gi, "");
-  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
@@ -1190,7 +1190,7 @@ router.post('/addpetRegist', async (req, res) => {
       respMsg: " lost contactPhone"
     };
   }
-  const orderNum = `3194${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
