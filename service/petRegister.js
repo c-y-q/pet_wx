@@ -495,7 +495,7 @@ exports.canOldUpdateCount = async (options) => {
     let querySql = ` select state, djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
                      where djhm = '${options.djhm}' and name = '${options.name}' and sex = '${options.sex}' and type = '${options.type}' 
                      and color = '${options.color}' and scdjsj = '${options.scdjsj}' and birthday = '${options.birthday}' 
-                     and master_name = '${options.master_name}' and master_address = '${optionsmaster_address}' GROUP BY djhm,name,sex,type,color,birthday `;
+                     and master_name = '${options.master_name}' and master_address = '${options.master_address}' GROUP BY djhm,name,sex,type,color,birthday `;
     // let groupSql = ' GROUP BY  ';
     // for (let key in options) {
     //     if (options[key]) {
