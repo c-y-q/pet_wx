@@ -131,7 +131,7 @@ exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
     merchantUserId: merchantUserId,
     msgType: "WXPay",
     msgSrc: "WWW.TEST.COM",
-    msgSrcId: "3194",
+    msgSrcId: "6594",
     notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify",
     md5Key: md5Keys
   };

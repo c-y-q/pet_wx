@@ -108,24 +108,25 @@ router.post('/wpPay', async (req, res) => {
     } // http://58.247.0.18:29015/v1/netpay/wx/unified-order
     const data = await axios(requestOptins);
     console.log(120, data);
-    if (data.data.status != 'WAIT_BUYER_PAY' || data.data.errCode != 'SUCCESS' || data.data.targetStatus != "SUCCESS|SUCCESS" || data.data.targetSys != 'WXPay') {
-        throw {
-            status: 400,
-            msg: 'order is not right!'
+        if (data.data.status != 'WAIT_BUYER_PAY' || data.data.errCode != 'SUCCESS' || data.data.targetStatus != "SUCCESS|SUCCESS" || data.data.targetSys != 'WXPay') {
+            throw {
+                status: 400,
+                msg: 'order is not right!'
+            }
         }
-    }
-    const resData = {
-        appId: data.data.miniPayRequest.appid,
-        nonceStr: data.data.miniPayRequest.nonceStr,
-        package: data.data.miniPayRequest.package,
-        signType: data.data.miniPayRequest.signType,
-        timeStamp: data.data.miniPayRequest.timeStamp,
-        paySign: data.data.miniPayRequest.paySign,
-    }
+        // const resData = {
+        //     appId: data.data.miniPayRequest.appId,
+        //     nonceStr: data.data.miniPayRequest.nonceStr,
+        //     package: data.data.miniPayRequest.package,
+        //     signType: data.data.miniPayRequest.signType,
+        //     timeStamp: data.data.miniPayRequest.timeStamp,
+        //     paySign: data.data.miniPayRequest.paySign,
+        // }
+        // console.log(128, resData);
 
     res.json({
         status: 200,
-        result: resData
+        result: data.data.miniPayRequest
     })
 })
 
