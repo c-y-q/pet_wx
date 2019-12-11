@@ -16,8 +16,6 @@ const {
  * 统一下单
  */
 router.post('/wpPay', async (req, res) => {
-
-
     //1.判断微信用户是否关注公众号
     const {
         openid,
@@ -88,27 +86,26 @@ router.post('/wpPay', async (req, res) => {
 
 
     /**
-    * 输入排序过后的key=value 值数组,用  "&" 字符拼接为字符串
-    */
+     * 输入排序过后的key=value 值数组,用  "&" 字符拼接为字符串
+     */
     let longStr = '';
     for (const str in rest) {
         longStr += str + '=' + rest[str] + '&';
     }
     console.log('---待签名参数---', longStr);
-    let signs = md5(longStr.substring(0, longStr.length - 1)+'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE');// 移除最后一个 & 符号 生成签名
+    let signs = md5(longStr.substring(0, longStr.length - 1) + 'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE'); // 移除最后一个 & 符号 生成签名
     params.sign = signs;
     // const sign = longStr + 'sign=' + signs;
     // console.log(117, sign);
-
     const requestOptins = {
         method: 'POST',
         headers: {
             // 'Authorization': Authorization
-        'Content-Type': 'application/x-www-form-urlencoded',
+            'Content-Type': 'application/x-www-form-urlencoded',
         },
         data: params,
         url: 'https://qr.chinaums.com/netpay-route-server/api/' //https://api-mop.chinaums.com/v1/netpay/wx/unified-order
-    }// http://58.247.0.18:29015/v1/netpay/wx/unified-order
+    } // http://58.247.0.18:29015/v1/netpay/wx/unified-order
     const data = await axios(requestOptins);
     console.log(120, data);
         if (data.data.status != 'WAIT_BUYER_PAY' || data.data.errCode != 'SUCCESS' || data.data.targetStatus != "SUCCESS|SUCCESS" || data.data.targetSys != 'WXPay') {
@@ -174,7 +171,7 @@ router.post('/wpPayNotify', async (req, res) => {
      * 2.1更新订单状态
      */
     if (orderInfo[0].order_status == 0) {
-        await service.updateOrder(merOrderId, 1, payTime || moment().format('YYYYMMDDHHmmss'));
+        await service.updateOrder(merOrderId, 1, moment().format('YYYYMMDDHHmmss'));
     }
     if (cacheParams) {
         let addPetRegAllInfoResult, yearCheckResult, oldUpperResult;
@@ -188,7 +185,7 @@ router.post('/wpPayNotify', async (req, res) => {
         } else if (orderInfo[0].order_source == 2) { //年审
             yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum, merOrderId);
         } else if (orderInfo[0].order_source == 3) { //旧证升级
-            oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid);
+            oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid, resdisParams.orderNum);
         }
         res.json({
             status: 200,
