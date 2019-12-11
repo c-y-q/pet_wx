@@ -60,6 +60,8 @@ router.post('/wpPay', async (req, res) => {
         tid,
         md5Key
     } = config.pay;
+    const type = typeof(orderInfo[0].total_price);
+    const types = orderInfo[0].total_price * 100;
     const params = {
         msgId: uuidTool().replace(/-/gi, ''),
         requestTimestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
