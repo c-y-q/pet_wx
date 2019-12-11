@@ -1068,7 +1068,8 @@ router.post('/upperldDogRegNum', async (req, res) => {
   const redisParams = {
     petRegId,
     uuid,
-    params
+    params,
+    orderNum
   }
   cache.set(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
   res.json({
@@ -1361,5 +1362,6 @@ router.post('/isCanUpperOld', async (req, res) => {
     result
   })
 });
+
 
 module.exports = router;

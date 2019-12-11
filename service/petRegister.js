@@ -110,6 +110,7 @@ exports.queryRegStatu = async (openId) => {
     return await conn.query(sql);
 };
 
+
 exports.findPetType = async () => {
     const sql = `select * from pet_type`;
     return await conn.query(sql);
@@ -507,16 +508,15 @@ exports.canOldUpdateCount = async (options) => {
     return result[0] && result[0].count || 0;
 }
 
-exports.upperldDogRegNum = async (params, petRegId, uuid) => {
-    const addpet = this.addinformations(params, petRegId, uuid);
+exports.upperldDogRegNum = async (params, petRegId, uuid, orderNum) => {
+    const addpet = this.addinformations(params, petRegId, uuid, orderNum);
     return addpet;
 }
-exports.addinformations = async (params, petRegId, uuid) => {
+exports.addinformations = async (params, petRegId, uuid, orderNum) => {
     const oldId = params.oldId;
     //更新已升级的状态
     const updateOldPetSql = 'update old_pet_info set state = 2 where id = ? ';
     await conn.query(updateOldPetSql, [oldId]);
-    const orderNum = `${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}${orderService.getMyUUId(5)}`; // 生成订单号
     const datetime = moment(new Date()).format('YYYYMMDDHHmmss')
     const addtime = moment(new Date()).add(1, 'y').format('YYYYMMDDHHmmss')
     const year = moment(new Date()).format('YYYY');
@@ -545,7 +545,6 @@ exports.addinformations = async (params, petRegId, uuid) => {
         residencePermitPic2: params.residencePermitPic2 && params.residencePermitPic2.replace(imgHttp, imgDbPath) || '',
         photoUrl: params.photoUrl && params.photoUrl.replace(imgHttp, imgDbPath) || '',
         photoUrl2: params.photoUrl2 && params.photoUrl2.replace(imgHttp, imgDbPath) || ''
-
     }
     const petsql = `INSERT INTO wx_pet_register_info (
                             id,
@@ -604,6 +603,18 @@ exports.addinformations = async (params, petRegId, uuid) => {
         )
         VALUES
             ('${year}','${petRegId}','${handleParams.photoUrl}','${handleParams.openid}','${datetime}','${handleParams.photoUrl2}')`;
+
+
+    const addpetRecordModel = {
+        pet_id: petRegId,
+        audit_status: 0,
+        checkor: '',
+        create_time: moment().format('YYYYMMDDHHmmss'),
+        creator: openid,
+        order_num: orderNum
+    }
+    const addpetRecordSql = 'insert into wx_addpet_record set ? ';
+    await conn.query(addpetRecordSql, addpetRecordModel);
     const pet = await conn.query(petsql);
     const master = await conn.query(mastersql);
     const perven = await conn.query(persql);
@@ -680,3 +691,5 @@ exports.isCanUpperOld = async (options) => {
     console.log('----sql----', sql);
     return await conn.query(sql);
 }
+
+exports.queryOld
