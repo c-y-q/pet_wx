@@ -610,7 +610,7 @@ exports.addinformations = async (params, petRegId, uuid, orderNum) => {
         audit_status: 0,
         checkor: '',
         create_time: moment().format('YYYYMMDDHHmmss'),
-        creator: openid,
+        creator: params.openid,
         order_num: orderNum
     }
     const addpetRecordSql = 'insert into wx_addpet_record set ? ';
@@ -697,10 +697,10 @@ exports.queryOldUpper = async (openId) => {
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m,wx_addpet_record wr
                  where 
                  p.old_id != ''
-                 p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+                 and p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
                  and wr.pet_id = p.id 
                  and p.pay_type <> -1
-                 order by p.create_time desc `;
+                 order by wr.create_time desc `;
     return await conn.query(sql);
 };
