@@ -103,6 +103,7 @@ exports.queryRegStatu = async (openId) => {
                  from  wx_pet_register_info p,sys_branch s,wx_pet_master m,wx_addpet_record wr
                  where 
                  p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+                 and p.old_id = ''
                  and p.creator_id = '${openId}'
                  and wr.pet_id = p.id 
                  and p.pay_type <> -1
