@@ -1337,7 +1337,7 @@ router.post('/isCanUpperOld', async (req, res) => {
     scdjsj: params.scdjsj || '',
     birthday: params.birthday || '',
     master_name: params.master_name || '',
-    master_address: params.master_address
+    master_address: params.master_address || '',
   }
   const canUpperCount = await service.canOldUpdateCount(options);
   if (canUpperCount.count == 0) {
