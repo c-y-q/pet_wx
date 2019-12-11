@@ -59,7 +59,8 @@ router.post('/wpPay', async (req, res) => {
         // Authorization,
         mid,
         merchantUserId,
-        tid
+        tid,
+        md5Key
     } = config.pay;
     const params = {
         msgId: uuidTool().replace(/-/gi, ''),
@@ -68,14 +69,15 @@ router.post('/wpPay', async (req, res) => {
         mid: mid,
         tid: tid,
         instMid: "MINIDEFAULT",
-        totalAmount: orderInfo[0].total_price * 100, //单位为分
+        totalAmount: orderInfo[0].total_price * 100, //单位为分 
         openid: openid,
         tradeType: "MINI",
         merchantUserId: merchantUserId,
         msgType: "wx.unifiedOrder",
-        msgSrc: "WWW.TEST.COM",
-        msgSrcId: "3194",
-        notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify"
+        msgSrc: "WWW.HBZNEWL.COM",
+        msgSrcId: "6594",
+        md5Key: md5Key,
+        notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify",
     }
 
     let rest = {};
@@ -83,6 +85,7 @@ router.post('/wpPay', async (req, res) => {
     for (const key of keyArray) {
         rest[key] = params[key];
     }
+
 
     /**
     * 输入排序过后的key=value 值数组,用  "&" 字符拼接为字符串
@@ -92,7 +95,7 @@ router.post('/wpPay', async (req, res) => {
         longStr += str + '=' + rest[str] + '&';
     }
     console.log('---待签名参数---', longStr);
-    let signs = md5(longStr.substring(0, longStr.length - 1)+'fcAmtnx7MwismjWNhNKdHC44mNXtnEQeJkRrhKJwyrW2ysRR');// 移除最后一个 & 符号 生成签名
+    let signs = md5(longStr.substring(0, longStr.length - 1)+'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE');// 移除最后一个 & 符号 生成签名
     params.sign = signs;
     // const sign = longStr + 'sign=' + signs;
     // console.log(117, sign);
@@ -104,7 +107,7 @@ router.post('/wpPay', async (req, res) => {
         'Content-Type': 'application/x-www-form-urlencoded',
         },
         data: params,
-        url: 'https://qr-test2.chinaums.com/netpay-route-server/api/' //https://api-mop.chinaums.com/v1/netpay/wx/unified-order
+        url: 'https://qr.chinaums.com/netpay-route-server/api/' //https://api-mop.chinaums.com/v1/netpay/wx/unified-order
     }// http://58.247.0.18:29015/v1/netpay/wx/unified-order
     const data = await axios(requestOptins);
     console.log(120, data);
