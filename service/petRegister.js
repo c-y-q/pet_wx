@@ -492,21 +492,26 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
 };
 
 exports.canOldUpdateCount = async (options) => {
-    let querySql = ` select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
-                     where state = 1  `;
-    let groupSql = ' GROUP BY  ';
-    for (let key in options) {
-        if (options[key]) {
-            querySql += ` and ${key} = '${options[key]}' `;
-            groupSql += `${key},`;
-        }
-    }
-    groupSql = groupSql.slice(0, -1);
-    const resultSql = querySql + groupSql;
-    console.log(504, resultSql)
+    let querySql = ` select state, djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
+                     where djhm = '${options.djhm}' and name = '${options.name}' and sex = '${options.sex}' and type = '${options.type}' 
+                     and color = '${options.color}' and scdjsj = '${options.scdjsj}' and birthday = '${options.birthday}' 
+                     and master_name = '${options.master_name}' and master_address = '${optionsmaster_address}' GROUP BY djhm,name,sex,type,color,birthday `;
+    // let groupSql = ' GROUP BY  ';
+    // for (let key in options) {
+    //     if (options[key]) {
+    //         querySql += ` and ${key} = '${options[key]}' `;
+    //         groupSql += `${key},`;
+    //     }
+    // }
+    // groupSql = groupSql.slice(0, -1);
+    // const resultSql = querySql + groupSql;
+    console.log(504, querySql)
     const result = await conn.query(resultSql);
     console.log(506, result)
-    return result[0] && result[0].count || 0;
+    return {
+        count: result[0] && result[0].count || 0,
+        state: result[0] && result[0].state
+    };
 }
 
 exports.upperldDogRegNum = async (params, petRegId, uuid, orderNum) => {

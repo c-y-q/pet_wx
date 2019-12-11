@@ -1340,16 +1340,28 @@ router.post('/isCanUpperOld', async (req, res) => {
     master_address: params.master_address
   }
   const canUpperCount = await service.canOldUpdateCount(options);
-  if (canUpperCount == 0) {
+  if (canUpperCount.count == 0) {
     throw {
       status: "0001",
       respMsg: "该犬只不存在！"
     };
   }
-  if (canUpperCount > 1) {
+  if (canUpperCount.count > 1) {
     throw {
       status: "0001",
       respMsg: "查询失败，请进行人工审核！"
+    };
+  }
+  if (canUpperCount.state == 2) {
+    throw {
+      status: "0001",
+      respMsg: "该犬只已升级！"
+    };
+  }
+  if (canUpperCount.state == 3) {
+    throw {
+      status: "0001",
+      respMsg: "该犬只已脱审！"
     };
   }
   const result = await service.isCanUpperOld(options);
