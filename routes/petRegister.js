@@ -1068,8 +1068,7 @@ router.post('/upperldDogRegNum', async (req, res) => {
   const redisParams = {
     petRegId,
     uuid,
-    params,
-    orderNum
+    params
   }
   cache.set(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
   res.json({
