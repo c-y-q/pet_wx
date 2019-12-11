@@ -700,7 +700,6 @@ exports.queryOldUpper = async (openId) => {
                  and p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
                  and p.creator_id = '${openId}'
                  and wr.pet_id = p.id 
-                 and p.pay_type <> -1
                  order by wr.create_time desc `;
     return await conn.query(sql);
 };
