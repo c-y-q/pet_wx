@@ -68,7 +68,9 @@ router.post('/wpPay', async (req, res) => {
         tid: tid,
         instMid: "MINIDEFAULT",
         totalAmount: orderInfo[0].total_price * 100, //单位为分 
-        openid: openid,
+        // openid: openid,
+        subOpenId: openid,
+        subAppId: "wx8a3e72751aa71401",
         tradeType: "MINI",
         merchantUserId: merchantUserId,
         msgType: "wx.unifiedOrder",
