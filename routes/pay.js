@@ -117,18 +117,19 @@ router.post('/wpPay', async (req, res) => {
                 msg: 'order is not right!'
             }
         }
-        const resData = {
-            appId: data.data.miniPayRequest.appid,
-            nonceStr: data.data.miniPayRequest.nonceStr,
-            package: data.data.miniPayRequest.package,
-            signType: data.data.miniPayRequest.signType,
-            timeStamp: data.data.miniPayRequest.timeStamp,
-            paySign: data.data.miniPayRequest.paySign,
-        }
+        // const resData = {
+        //     appId: data.data.miniPayRequest.appId,
+        //     nonceStr: data.data.miniPayRequest.nonceStr,
+        //     package: data.data.miniPayRequest.package,
+        //     signType: data.data.miniPayRequest.signType,
+        //     timeStamp: data.data.miniPayRequest.timeStamp,
+        //     paySign: data.data.miniPayRequest.paySign,
+        // }
+        // console.log(128, resData);
 
     res.json({
         status: 200,
-        result: resData
+        result: data.data.miniPayRequest
     })
 })
 
