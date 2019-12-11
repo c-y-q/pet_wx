@@ -1363,10 +1363,9 @@ router.post('/isCanUpperOld', async (req, res) => {
   })
 });
 
-router.post("/queryRegList", async (req, res) => {
+router.post("/queryOldUpper", async (req, res) => {
   const openId = req.body.openid;
   const unionId = req.body.unionid;
-  const idNumber = req.body.idNumber;
   if (!openId || !unionId) {
     throw {
       respCode: "0001",
