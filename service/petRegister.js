@@ -692,4 +692,15 @@ exports.isCanUpperOld = async (options) => {
     return await conn.query(sql);
 }
 
-exports.queryOld
+exports.queryOldUpper = async (openId) => {
+    const sql = `select p.expressname,p.audit_type,p.deliver,p.checker,p.receive_addr,p.receive_phone,p.receive_name, p.courier_number,p.receive,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wr.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+                 from  wx_pet_register_info p,sys_branch s,wx_pet_master m,wx_addpet_record wr
+                 where 
+                 p.old_id != ''
+                 p.area_code = s.code and m.creator_id = p.creator_id and m.id = p.master_id
+                 and p.creator_id = '${openId}'
+                 and wr.pet_id = p.id 
+                 and p.pay_type <> -1
+                 order by p.create_time desc `;
+    return await conn.query(sql);
+};
