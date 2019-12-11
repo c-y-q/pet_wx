@@ -80,10 +80,10 @@ module.exports = {
         }
     },
     pay: {
-        mid: "998340149100000", // 商户号  998340149100000
+        mid: "898130448161057", // 商户号  998340149100000
         merchantUserId: "898340149000005", // 商户用户名
-        tid: "88880001", // 终端号 88880001
+        tid: "04936623", // 终端号 88880001
         Authorization: 'Authorization', // 权限
-        md5Key: 'fcAmtnx7MwismjWNhNKdHC44mNXtnEQeJkRrhKJwyrW2ysRR'
+        md5Key: 'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE'
     }
 }

@@ -1068,7 +1068,8 @@ router.post('/upperldDogRegNum', async (req, res) => {
   const redisParams = {
     petRegId,
     uuid,
-    params
+    params,
+    orderNum
   }
   cache.set(`${orderNum}`, JSON.stringify(redisParams), 'EX', 60 * 3);
   res.json({
@@ -1360,6 +1361,71 @@ router.post('/isCanUpperOld', async (req, res) => {
     respMsg: '可以升级旧犬证!',
     result
   })
+});
+
+router.post("/queryOldUpper", async (req, res) => {
+  const openId = req.body.openid;
+  const unionId = req.body.unionid;
+  if (!openId || !unionId) {
+    throw {
+      respCode: "0001",
+      respMsg: " lost params"
+    };
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    };
+  }
+  const result = await service.queryOldUpper(openId);
+  let petRegInfo = [];
+  if (result.length > 0) {
+    petRegInfo = result.map(obj => {
+      let checkStatus = obj.audit_status;
+      return {
+        expressname: obj.expressname || "",
+        payType: obj.pay_type,
+        // "branchAddr": obj.branchAddr || '【邯郸市公安局】滏东北大街与联纺东路交叉口北行200米',
+        petColor: obj.coat_color,
+        petGender: obj.gender == 1 ? "雄" : obj.gender == 2 ? "雌" : "未知",
+        petType: obj.breed,
+        petRegId: obj.id,
+        checkStatus: checkStatus, //== 1 ? '已通过' : checkStatus == 2 ? '未通过' : '审核中',
+        auditRemarks: obj.audit_remarks,
+        areaName: obj.name || "",
+        dogRegNum: obj.dog_reg_num || 0,
+        petName: obj.pet_name || "",
+        petState: obj.pet_state,
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) : "",
+        createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
+          "YYYY-MM-DD HH:mm:ss"
+        ),
+        petPhotoUrl: (obj.pet_photo_url &&
+            obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
+          "",
+        masterName: obj.real_name || "",
+        masterAdress: obj.residential_address || "",
+        contactPhone: obj.contact_phone || "",
+        receive: obj.receive,
+        receiveName: obj.receive_name || "",
+        courierNumber: obj.courier_number || "",
+        receivePhone: obj.receive_phone || "",
+        receiveAddr: obj.receive_addr || "",
+        checker: obj.checker || "",
+        deliver: obj.deliver,
+        auditType: obj.audit_type
+      };
+    });
+  }
+  res.json({
+    status: 200,
+    result: petRegInfo
+  });
 });
 
 module.exports = router;
