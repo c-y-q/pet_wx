@@ -492,7 +492,7 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
 };
 
 exports.canOldUpdateCount = async (options) => {
-    let querySql = ` select djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
+    let querySql = ` select state, djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
                      where`;
     let groupSql = ' GROUP BY  ';
     for (let key in options) {
@@ -519,7 +519,10 @@ exports.canOldUpdateCount = async (options) => {
 
     const result = await conn.query(resultsSql);
     console.log(506, result)
-    return result[0] && result[0].count || 0;
+    return {
+        count: result[0] && result[0].count || 0,
+        state: result[0] && result[0].state,
+    }
 }
 
 exports.upperldDogRegNum = async (params, petRegId, uuid, orderNum) => {
