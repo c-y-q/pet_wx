@@ -118,6 +118,7 @@ exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
     tid,
     md5Keys
   } = config.wppay;
+  console.log('-----type-----', totalPrice +'-----------' + typeof(totalPrice));
   const params = {
     msgId: uuidTool().replace(/-/gi, ""),
     requestTimestamp: moment().format("YYYY-MM-DD HH:mm:ss"),
