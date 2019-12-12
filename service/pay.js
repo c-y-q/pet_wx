@@ -76,7 +76,7 @@ exports.queryOrder = async (creatorId, orderNum) => {
 exports.queryPrice = async code => {
   const sql = `select data from sys_params where type = 'paymentType' and code = ? `;
   const result = await conn.query(sql, [code]);
-  return parseInt(result[0].data) || 0;
+  return Number(result[0].data) || 0;
 };
 
 exports.queryRegInfoAuditStatus = async creatorId => {
@@ -97,7 +97,7 @@ exports.updateRegisterPayType = async (masterId, payType) => {
 exports.queryExpressCost = async () => {
   const sql = ` select data from sys_params where type = 'expresscost' `;
   const result = await conn.query(sql);
-  return parseInt(result[0].data) || 0;
+  return Number(result[0].data) || 0;
 };
 
 exports.queryOrderStatus = async (openId, orderSource, petRegId) => {
