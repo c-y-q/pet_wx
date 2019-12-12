@@ -1192,27 +1192,10 @@ router.post('/addpetRegist', async (req, res) => {
   }
   const uuid = uuidTool().replace(/-/gi, "");
   const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  const petRegId = uuidTool().replace(/-/gi, "");
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
-  const addPetMasterResult = await service.addPetMaster(
-    params.openid,
-    uuid,
-    params
-  );
-  const petRegId = uuidTool().replace(/-/gi, "");
-  const addPetRegResult = await service.addPetregister(
-    params.openid,
-    petRegId,
-    uuid,
-    params,
-    orderNum
-  );
-  const addPetPreventionResult = await service.addPetPreventionInfo(
-    params.openid,
-    petRegId,
-    params
-  );
 
 
   const price = await orderService.queryPrice(1);
