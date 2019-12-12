@@ -1035,7 +1035,7 @@ router.post('/upperldDogRegNum', async (req, res) => {
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
-  const price = await orderService.queryPrice(3);
+  const price = await orderService.queryPrice(2);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
     expresscost = 0;
