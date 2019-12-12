@@ -1190,10 +1190,14 @@ router.post('/addpetRegist', async (req, res) => {
       respMsg: " lost contactPhone"
     };
   }
+  const uuid = uuidTool().replace(/-/gi, "");
   const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
+  const petRegId = uuidTool().replace(/-/gi, "");
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
+
+
   const price = await orderService.queryPrice(1);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
@@ -1209,7 +1213,6 @@ router.post('/addpetRegist', async (req, res) => {
   } else {
     totalPrice = 9999;
   }
-  const petRegId = uuidTool().replace(/-/gi, "");
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
@@ -1224,7 +1227,6 @@ router.post('/addpetRegist', async (req, res) => {
   await orderService.addWxOrder(orderModel);
   //1.调用统一下单接口
   // const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
-  const uuid = uuidTool().replace(/-/gi, "");
   //将所有信息登记信息保存在redis中
   const redisParams = {
     openid: params.openid,
