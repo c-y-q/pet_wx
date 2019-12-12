@@ -492,46 +492,8 @@ exports.updateYearCheckInfo = async (petRegId, options) => {
 };
 
 exports.canOldUpdateCount = async (options) => {
-    // const option = {};
-    // if (options.djhm) {
-    //     option.djhm = options.djhm;
-    // }
-    // if (options.name) {
-    //     option.name = options.name;
-    // }
-    // if (options.sex) {
-    //     option.sex = options.sex;
-    // }
-    // if (options.type) {
-    //     option.type = options.type;
-    // }
-    // if (options.color) {
-    //     option.color = options.color;
-    // }
-    // if (options.scdjsj) {
-    //     option.scdjsj = options.scdjsj;
-    // }
-    // if (options.birthday) {
-    //     option.birthday = options.birthday;
-    // }
-    // if (options.master_name) {
-    //     option.master_name = options.master_name;
-    // }
-    // if (options.master_address) {
-    //     option.master_address = options.master_address;
-    // }
-    let querySql = ` SELECT
-                        state,
-                        djhm,
-                        NAME,
-                        sex,
-                        type,
-                        color,
-                        birthday,
-                        count( djhm ) count 
-                    FROM
-                        old_pet_info 
-                    WHERE state = 1 `;
+    let querySql = ` select state, djhm,name,sex,type,color,birthday,count(djhm) count from old_pet_info 
+                     where`;
     let groupSql = ' GROUP BY  ';
     for (let key in options) {
         if (options[key]) {
@@ -542,9 +504,25 @@ exports.canOldUpdateCount = async (options) => {
     groupSql = groupSql.slice(0, -1);
     const resultSql = querySql + groupSql;
     console.log(504, resultSql)
-    const result = await conn.query(querySql);
+    
+    const match = resultSql.match('where')
+    console.log(5, match.index);
+    const substr = resultSql.substr(0, match.index + 5)
+    console.log(7, substr);
+    const querylength = resultSql.length;
+    const substr2 = resultSql.substr(match.index + 9, querylength)
+    console.log(9, substr2);
+    const resultsSql = substr.concat(substr2);
+    
+    console.log(11, resultsSql);
+
+
+    const result = await conn.query(resultsSql);
     console.log(506, result)
-    return result[0] && result[0].count || 0,
+    return {
+        count: result[0] && result[0].count || 0,
+        state: result[0] && result[0].state,
+    }
 }
 
 exports.upperldDogRegNum = async (params, petRegId, uuid, orderNum) => {

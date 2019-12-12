@@ -1035,7 +1035,7 @@ router.post('/upperldDogRegNum', async (req, res) => {
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
-  const price = await orderService.queryPrice(3);
+  const price = await orderService.queryPrice(2);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
     expresscost = 0;
@@ -1190,10 +1190,31 @@ router.post('/addpetRegist', async (req, res) => {
       respMsg: " lost contactPhone"
     };
   }
+  const uuid = uuidTool().replace(/-/gi, "");
   const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
   // const orderNum = `${moment().format(
   //   "YYYYMMDDHHmmss"
   // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
+  const addPetMasterResult = await service.addPetMaster(
+    params.openid,
+    uuid,
+    params
+  );
+  const petRegId = uuidTool().replace(/-/gi, "");
+  const addPetRegResult = await service.addPetregister(
+    params.openid,
+    petRegId,
+    uuid,
+    params,
+    orderNum
+  );
+  const addPetPreventionResult = await service.addPetPreventionInfo(
+    params.openid,
+    petRegId,
+    params
+  );
+
+
   const price = await orderService.queryPrice(1);
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
@@ -1209,7 +1230,6 @@ router.post('/addpetRegist', async (req, res) => {
   } else {
     totalPrice = 9999;
   }
-  const petRegId = uuidTool().replace(/-/gi, "");
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
@@ -1224,7 +1244,6 @@ router.post('/addpetRegist', async (req, res) => {
   await orderService.addWxOrder(orderModel);
   //1.调用统一下单接口
   // const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
-  const uuid = uuidTool().replace(/-/gi, "");
   //将所有信息登记信息保存在redis中
   const redisParams = {
     openid: params.openid,
@@ -1340,30 +1359,30 @@ router.post('/isCanUpperOld', async (req, res) => {
     master_address: params.master_address || '',
   }
   const canUpperCount = await service.canOldUpdateCount(options);
-  if (canUpperCount == 0) {
+  if (canUpperCount.count == 0) {
     throw {
       status: "0001",
       respMsg: "该犬只不存在！"
     };
   }
-  if (canUpperCount > 1) {
+  if (canUpperCount.count > 1) {
     throw {
       status: "0001",
       respMsg: "查询失败，请进行人工审核！"
     };
   }
-  // if (canUpperCount.state == 2) {
-  //   throw {
-  //     status: "0001",
-  //     respMsg: "该犬只已升级！"
-  //   };
-  // }
-  // if (canUpperCount.state == 3) {
-  //   throw {
-  //     status: "0001",
-  //     respMsg: "该犬只已脱审！"
-  //   };
-  // }
+  if (canUpperCount.state == 2) {
+    throw {
+      status: "0001",
+      respMsg: "该犬只已升级！"
+    };
+  }
+  if (canUpperCount.state == 3) {
+    throw {
+      status: "0001",
+      respMsg: "该犬只已脱审！"
+    };
+  }
   const result = await service.isCanUpperOld(options);
   const imgHttp = 'http://192.168.50.111:7001/public/oldImages/b/dog_image';
   result[0].photo = result[0].photo.replace(`/b/dog_image`, imgHttp);
