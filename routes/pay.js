@@ -60,7 +60,7 @@ router.post('/wpPay', async (req, res) => {
         tid,
         md5Key
     } = config.pay;
-    const type = typeof(orderInfo[0].total_price);
+    const type = typeof (orderInfo[0].total_price);
     const types = orderInfo[0].total_price * 100;
     const params = {
         msgId: uuidTool().replace(/-/gi, ''),
@@ -112,21 +112,21 @@ router.post('/wpPay', async (req, res) => {
     } // http://58.247.0.18:29015/v1/netpay/wx/unified-order
     const data = await axios(requestOptins);
     console.log(120, data);
-        if (data.data.status != 'WAIT_BUYER_PAY' || data.data.errCode != 'SUCCESS' || data.data.targetStatus != "SUCCESS|SUCCESS" || data.data.targetSys != 'WXPay') {
-            throw {
-                status: 400,
-                msg: 'order is not right!'
-            }
+    if (data.data.status != 'WAIT_BUYER_PAY' || data.data.errCode != 'SUCCESS' || data.data.targetStatus != "SUCCESS|SUCCESS" || data.data.targetSys != 'WXPay') {
+        throw {
+            status: 400,
+            msg: 'order is not right!'
         }
-        // const resData = {
-        //     appId: data.data.miniPayRequest.appId,
-        //     nonceStr: data.data.miniPayRequest.nonceStr,
-        //     package: data.data.miniPayRequest.package,
-        //     signType: data.data.miniPayRequest.signType,
-        //     timeStamp: data.data.miniPayRequest.timeStamp,
-        //     paySign: data.data.miniPayRequest.paySign,
-        // }
-        // console.log(128, resData);
+    }
+    // const resData = {
+    //     appId: data.data.miniPayRequest.appId,
+    //     nonceStr: data.data.miniPayRequest.nonceStr,
+    //     package: data.data.miniPayRequest.package,
+    //     signType: data.data.miniPayRequest.signType,
+    //     timeStamp: data.data.miniPayRequest.timeStamp,
+    //     paySign: data.data.miniPayRequest.paySign,
+    // }
+    // console.log(128, resData);
 
     res.json({
         status: 200,
@@ -156,18 +156,10 @@ router.post('/wpPayNotify', async (req, res) => {
      */
     const orderInfo = await service.queryOrder('', merOrderId);
     if (!orderInfo.length) {
-        throw {
-            status: '0001',
-            respMsg: " order is not exists !"
-        }
-    }
-    const cacheParams = await cache.get(`${merOrderId}`);
-    if (orderInfo.length && orderInfo[0].order_status == 1) {
-        res.json({
-            status: 200,
-        })
+        res.send('FAILED');
         return;
     }
+    const cacheParams = await cache.get(`${merOrderId}`);
     if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.pay.mid && tid == config.pay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
         res.send('FAILED');
         return;
@@ -193,12 +185,12 @@ router.post('/wpPayNotify', async (req, res) => {
         } else if (orderInfo[0].order_source == 3) { //旧证升级
             oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid, resdisParams.orderNum);
         }
-        res.json({
-            status: 200,
+        await cache.del(`${merOrderId}`);
+        console.log('微信支付回调成功，数据库处理结果', JSON.stringify({
             addPetRegAllInfoResult,
             yearCheckResult,
             oldUpperResult
-        })
+        }))
     }
 
 })
