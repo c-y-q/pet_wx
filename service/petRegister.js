@@ -504,7 +504,7 @@ exports.canOldUpdateCount = async (options) => {
     groupSql = groupSql.slice(0, -1);
     const resultSql = querySql + groupSql;
     console.log(504, resultSql)
-    
+
     const match = resultSql.match('where')
     console.log(5, match.index);
     const substr = resultSql.substr(0, match.index + 5)
@@ -513,7 +513,7 @@ exports.canOldUpdateCount = async (options) => {
     const substr2 = resultSql.substr(match.index + 9, querylength)
     console.log(9, substr2);
     const resultsSql = substr.concat(substr2);
-    
+
     console.log(11, resultsSql);
 
 
@@ -723,3 +723,8 @@ exports.queryOldUpper = async (openId) => {
                  order by wr.create_time desc `;
     return await conn.query(sql);
 };
+
+exports.getPriceAndExressCost = async () => {
+    const sql = ` select code,data from  sys_params where type = 'paymentType' and code <> 4 `;
+    return await conn.query(sql);
+}
