@@ -475,7 +475,7 @@ exports.findPreventionInfo = async petRegId => {
 };
 //年审,审核状态不通过，更改年审信息pet_state = 3 and audit_status =2
 exports.updateYearCheckInfo = async (petRegId, options) => {
-    const updateSql1 = ` update pet_register_info set audit_status = 0, audit_remarks = '' where id = ? `;
+    const updateSql1 = ` update pet_register_info set audit_status = 0, audit_remarks = '',pet_state = 3 ,submit_source = 2 where id = ? `;
     await conn.query(updateSql1, [petRegId]);
     //更改年审记录
     const updateSql2 = 'update  wx_review_record set  audit_status = 0, update_time = ?  where pet_id = ? and order_num = ? ';
