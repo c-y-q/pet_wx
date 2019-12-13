@@ -79,7 +79,7 @@ router.post('/wpPay', async (req, res) => {
         msgSrc: "WWW.HBZNEWL.COM",
         msgSrcId: "6594",
         md5Key: md5Key,
-        notifyUrl: "http://pet.hbzner.com/wx/wpPayNotify",
+        notifyUrl: "http://wxpet.free.idcfengye.com/pay/wpPayNotify",
     }
 
     let rest = {};
@@ -132,6 +132,10 @@ router.post('/wpPay', async (req, res) => {
         status: 200,
         result: data.data.miniPayRequest
     })
+})
+router.post('/wpPayResult', async (req, res) => {
+    console.log('------req--------', req);
+    console.log('------res--------', res);
 })
 
 router.post('/wpPayNotify', async (req, res) => {
