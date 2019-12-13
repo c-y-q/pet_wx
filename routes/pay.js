@@ -173,10 +173,10 @@ router.post('/wpPayNotify', async (req, res) => {
         return;
     }
     if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.pay.mid && tid == config.pay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
-        res.send = 'FAILED';
+        res.send('FAILED');
         return;
     }
-    res.send = 'SUCCESS';
+    res.send('SUCCESS');
     /**
      * 2.1更新订单状态
      */
