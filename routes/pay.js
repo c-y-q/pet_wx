@@ -133,10 +133,6 @@ router.post('/wpPay', async (req, res) => {
         result: data.data.miniPayRequest
     })
 })
-router.post('/wpPayResult', async (req, res) => {
-    console.log('------req--------', req);
-    console.log('------res--------', res);
-})
 
 router.post('/wpPayNotify', async (req, res) => {
     console.log('------req.body----------', req.body);
