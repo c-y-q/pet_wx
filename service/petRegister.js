@@ -432,7 +432,7 @@ exports.updatePetRegInfo = async options => {
         options.petRegId
     ]);
 
-    const petRegSql = `update wx_pet_register_info  set audit_status = ? ,pet_name = ?, gender = ?,breed = ?,coat_color = ?,
+    const petRegSql = `update wx_pet_register_info  set audit_remarks = '', audit_status = ? ,pet_name = ?, gender = ?,breed = ?,coat_color = ?,
                         birthday = ?,area_code = ?,pet_photo_url = ?,update_time = ?
                        where id = ? `;
     const petRegModel = [

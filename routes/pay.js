@@ -174,6 +174,7 @@ router.post('/wpPayNotify', async (req, res) => {
     if (cacheParams) {
         let addPetRegAllInfoResult, yearCheckResult, oldUpperResult;
         const resdisParams = JSON.parse(cacheParams);
+        console.log(177, resdisParams)
         //查询petRegId信息是否已存在wx_pet_reg_info
         const judePetExists = await registerService.petRegIdPay(orderInfo[0].pet_id);
         //2.2 支付成功后，从redis中取出数据，保存到微信表中.
