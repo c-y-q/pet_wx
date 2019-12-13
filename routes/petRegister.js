@@ -1445,21 +1445,21 @@ router.post("/queryOldUpper", async (req, res) => {
  * 仅仅小程序进行渲染使用
  */
 router.post('/getPriceAndExressCost', async (req, res) => {
-  // const openId = req.body.openid;
-  // const unionId = req.body.unionid;
-  // if (!openId || !unionId) {
-  //   throw {
-  //     respCode: "0001",
-  //     respMsg: " lost params"
-  //   };
-  // }
-  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  // if (bindWxUserInfo.length == 0) {
-  //   throw {
-  //     status: 10010,
-  //     respMsg: " to bind wxpulic !"
-  //   };
-  // }
+  const openId = req.body.openid;
+  const unionId = req.body.unionid;
+  if (!openId || !unionId) {
+    throw {
+      respCode: "0001",
+      respMsg: " lost params"
+    };
+  }
+  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  if (bindWxUserInfo.length == 0) {
+    throw {
+      status: 10010,
+      respMsg: " to bind wxpulic !"
+    };
+  }
   const expresscost = await orderService.queryExpressCost();
   const getPrice = await service.getPriceAndExressCost();
   res.json({
