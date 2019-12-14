@@ -84,9 +84,9 @@ exports.queryRegInfoAuditStatus = async creatorId => {
   return await conn.query(sql, [creatorId]);
 };
 
-exports.updateOrder = async (orderNum, orderStatus, payTime) => {
-  let sql = ` update wx_order set order_status = ?, pay_time = ?  where order_num = ?  `;
-  return await conn.query(sql, [orderStatus, payTime, orderNum]);
+exports.updateOrder = async (orderNum, orderStatus, payTime, targetOrderId) => {
+  let sql = ` update wx_order set order_status = ?, pay_time = ?,trade_num = ?   where order_num = ?  `;
+  return await conn.query(sql, [orderStatus, payTime, orderNum, targetOrderId]);
 };
 
 exports.updateRegisterPayType = async (masterId, payType) => {
@@ -118,7 +118,7 @@ exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
     tid,
     md5Keys
   } = config.wppay;
-  console.log('-----type-----', totalPrice +'-----------' + typeof(totalPrice));
+  console.log('-----type-----', totalPrice + '-----------' + typeof (totalPrice));
   const params = {
     msgId: uuidTool().replace(/-/gi, ""),
     requestTimestamp: moment().format("YYYY-MM-DD HH:mm:ss"),

@@ -145,6 +145,7 @@ router.post('/wpPayNotify', async (req, res) => {
     const {
         status,
         targetSys,
+        targetOrderId,
         mid,
         tid,
         totalAmount,
@@ -168,7 +169,7 @@ router.post('/wpPayNotify', async (req, res) => {
     /**
      * 2.1更新订单状态
      */
-    await service.updateOrder(merOrderId, 1, moment().format('YYYYMMDDHHmmss'));
+    await service.updateOrder(merOrderId, 1, moment().format('YYYYMMDDHHmmss'), targetOrderId);
     if (cacheParams) {
         let addPetRegAllInfoResult, yearCheckResult, oldUpperResult;
         const resdisParams = JSON.parse(cacheParams);

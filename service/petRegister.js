@@ -740,7 +740,7 @@ exports.getPriceAndExressCost = async () => {
 }
 
 exports.queryDogRegNumIsOk = async (petRegId) => {
-    const sql = ` select pet_state wx_pet_register_info  where id = ? `;
+    const sql = ` select pet_state from wx_pet_register_info  where id = ? `;
     const result = await conn.query(sql, [petRegId]);
     return result.length > 0 && result[0].pet_state == 1;
 }
