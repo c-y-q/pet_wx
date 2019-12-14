@@ -738,3 +738,9 @@ exports.getPriceAndExressCost = async () => {
     const sql = ` select code,data from  sys_params where type = 'paymentType' and code <> 4 `;
     return await conn.query(sql);
 }
+
+exports.queryDogRegNumIsOk = async (petRegId) => {
+    const sql = ` select pet_state wx_pet_register_info  where id = ? `;
+    const result = await conn.query(sql, [petRegId]);
+    return result.length > 0 && result[0].pet_state == 1;
+}
