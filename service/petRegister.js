@@ -271,7 +271,7 @@ exports.petRegIdPay = async id => {
 };
 
 exports.findAllArea = async () => {
-    const sql = `select * from sys_branch  where parent_code = '130401' `; //
+    const sql = `select * from sys_branch  where parent_code = '130401' `;
     return await conn.query(sql);
 };
 
@@ -289,8 +289,21 @@ exports.hasUserBindSysInfo = async idNumber => {
 
 //年审
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
-    console.log(290, options)
-    const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2  where dog_reg_num = ? `;
+    // const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2  where dog_reg_num = ? `;
+    const querySql = ` select * from pet_register_info where dog_reg_num = ${dogRegNum} `;
+    const petRegResult = await conn.query(querySql);
+    /**
+     * 复制防疫信息表，复制主人表，复制犬登记表
+     */
+    if (petRegResult.length == 0) {
+        const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img `);
+        const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master select * from pet_master`);
+        let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time
+                              submit_source,audit_status,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
+        const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info `);
+        await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise]);
+    }
+    const petRegSql = ` update pet_register_info set submit_source = 2  where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
         pet_id: petRegId,
@@ -303,16 +316,11 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
     }
     // const isHasYearCheckRecordSql = ' select * from wx_review_record  where pet_id = ? ';
     // const isHasYearCheckResult = await conn.query(isHasYearCheckRecordSql, [petRegId]);
-    // if (isHasYearCheckResult.length == 0) {
     const yearCheckRecordSql = ' insert into wx_review_record set ? ';
     await conn.query(yearCheckRecordSql, yearRecordModel);
-    // } else {
-    //     const reviewRecordSql = ` update  wx_review_record set audit_status = 0   where pet_id = ? `;
-    //     await conn.query(reviewRecordSql, [petRegId]);
-    // }
     const wxPetRegPromise = conn.query(wxPetRegSql, [orderNum, dogRegNum]);
     const petRegPromise = conn.query(petRegSql, [dogRegNum]);
-    const wxPetPrevSql = `update pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
+    const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const petPrevParam = [
         options.year,
         options.photoUrl,
@@ -321,7 +329,7 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
         petRegId
     ]
     const wxPetPrevPromise = conn.query(wxPetPrevSql, petPrevParam);
-    return await Promise.all([petRegPromise, wxPetRegPromise, wxPetPrevPromise]);
+    return await Promise.all([petRegPromise, wxPetPrevPromise, wxPetRegPromise]);
 };
 
 exports.queryRegInfoByRegId = async queryRegInfoByRegId => {
@@ -475,13 +483,13 @@ exports.findPreventionInfo = async petRegId => {
 };
 //年审,审核状态不通过，更改年审信息pet_state = 3 and audit_status =2
 exports.updateYearCheckInfo = async (petRegId, options) => {
-    const updateSql1 = ` update pet_register_info set audit_status = 0, audit_remarks = '',pet_state = 3 ,submit_source = 2 where id = ? `;
+    const updateSql1 = ` update wx_pet_register_info set audit_status = 0, audit_remarks = '',pet_state = 3 ,submit_source = 2 where id = ? `;
     await conn.query(updateSql1, [petRegId]);
     //更改年审记录
     const updateSql2 = 'update  wx_review_record set  audit_status = 0, update_time = ?  where pet_id = ? and order_num = ? ';
     await await conn.query(updateSql2, [moment().format('YYYYMMDDHHmmss'), petRegId, options.orderNum]);
     const petPrevSql =
-        "update pet_prevention_img set photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ?  ";
+        "update wx_pet_prevention_img set photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ?  ";
     const petPrevUpdateResult = await conn.query(petPrevSql, [
         options.photoUrl.replace(imgHttp, imgDbPath),
         options.photoUrl2.replace(imgHttp, imgDbPath),
@@ -690,7 +698,7 @@ exports.petexamine = async (dogRegNum) => {
 //年审记录列表
 exports.queryYearCheckRecord = async (openId) => {
     const sql = `select wr.order_num,v.photo_url,v.photo_url2,p.pay_type,s.remarks branchAddr, p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wr.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,wr.update_time create_time,p.pet_photo_url 
-    from pet_register_info p, wx_review_record wr, pet_prevention_img v, sys_branch s, pet_master m
+    from wx_pet_register_info p, wx_review_record wr, wx_pet_prevention_img v, sys_branch s, wx_pet_master m
     where
     p.area_code = s.code  and m.id = p.master_id
     and wr.pet_id = p.id
