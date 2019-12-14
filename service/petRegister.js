@@ -290,14 +290,16 @@ exports.hasUserBindSysInfo = async idNumber => {
 //年审
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
     // const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2  where dog_reg_num = ? `;
-    const querySql = ` select * from pet_register_info where dog_reg_num = ${dogRegNum} `;
-    const petRegResult = await conn.query(querySql);
+    const wxquerySql = ` select * from wx_pet_register_info where dog_reg_num = ${dogRegNum} `;
+    const wxpetRegResult = await conn.query(wxquerySql);
     /**
      * 复制防疫信息表，复制主人表，复制犬登记表
      */
-    if (petRegResult.length == 0) {
-        const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img `);
-        const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master select * from pet_master`);
+    if (wxpetRegResult.length == 0) {
+        const petRegInfo = await conn.query(`select id,master_id from wx_pet_register_info wx_pet_register_info where dog_reg_num = ${dogRegNum}`);
+
+        const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `);
+        const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master select * from pet_master where id = '${petRegInfo[0].master_id}' `);
         let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time
                               submit_source,audit_status,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
         const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = '${dogRegNum}' `);
@@ -478,7 +480,7 @@ exports.updatePetRegLatestNum = async (openid, orderNum) => {
 
 exports.findPreventionInfo = async petRegId => {
     const sql =
-        " select expire_time,pet_state from pet_register_info where id = ? ";
+        " select expire_time,pet_state from wx_pet_register_info where id = ? ";
     return await conn.query(sql, [petRegId]);
 };
 //年审,审核状态不通过，更改年审信息pet_state = 3 and audit_status =2
