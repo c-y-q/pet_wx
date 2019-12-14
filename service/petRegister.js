@@ -300,10 +300,10 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
         const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master select * from pet_master`);
         let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time
                               submit_source,audit_status,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
-        const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info `);
+        const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = '${dogRegNum}' `);
         await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise]);
     }
-    const petRegSql = ` update pet_register_info set submit_source = 2  where dog_reg_num = ? `;
+    // const petRegSql = ` update pet_register_info set submit_source = 2  where dog_reg_num = ? `;
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
         pet_id: petRegId,
@@ -319,7 +319,7 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
     const yearCheckRecordSql = ' insert into wx_review_record set ? ';
     await conn.query(yearCheckRecordSql, yearRecordModel);
     const wxPetRegPromise = conn.query(wxPetRegSql, [orderNum, dogRegNum]);
-    const petRegPromise = conn.query(petRegSql, [dogRegNum]);
+    // const petRegPromise = conn.query(petRegSql, [dogRegNum]);
     const wxPetPrevSql = `update wx_pet_prevention_img set year = ?,photo_url = ?, photo_url2 = ?, update_time = ? where pet_reg_id = ? `;
     const petPrevParam = [
         options.year,
@@ -329,7 +329,7 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
         petRegId
     ]
     const wxPetPrevPromise = conn.query(wxPetPrevSql, petPrevParam);
-    return await Promise.all([petRegPromise, wxPetPrevPromise, wxPetRegPromise]);
+    return await Promise.all([wxPetPrevPromise, wxPetRegPromise]); //petRegPromise, 
 };
 
 exports.queryRegInfoByRegId = async queryRegInfoByRegId => {
