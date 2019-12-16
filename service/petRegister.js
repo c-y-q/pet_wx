@@ -198,7 +198,7 @@ exports.findPetInfosByIdNum = async (
     dogRegNum
 ) => {
     const sql = `select p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url
-              from  pet_register_info p,sys_branch s,pet_master m
+              from  wx_pet_register_info p,sys_branch s,pet_master m
               where
               p.area_code = s.code and m.id = p.master_id
               and p.pet_state > 0
@@ -226,9 +226,10 @@ exports.queryRegList = async (openId, unionId) => {
     if (resultRegIds.length == 0) {
         return [];
     }
-    const resultSql = ` select p.expire_time,p.birthday,p.pay_type,p.audit_remarks,p.gender,p.breed,p.coat_color, p.id,p.audit_status,m.real_name,m.id_number,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
-                 from  pet_register_info p,sys_branch s,pet_master m
+    const resultSql = ` select p.expire_time,p.birthday,p.pay_type,wx.audit_remarks,p.gender,p.breed,p.coat_color, p.id,wx.audit_status,m.real_name,m.id_number,m.residential_address,m.contact_phone,s.name,p.dog_reg_num,p.pet_name,p.pet_state,p.renew_time,p.create_time,p.pet_photo_url 
+                 from  pet_register_info p,wx_pet_register_info wx,sys_branch s,pet_master m
                  where 
+                 p.id = wx.id and 
                  p.area_code = s.code and m.id = p.master_id
                  and p.id in (?)
                  and p.dog_reg_num <> ''
@@ -301,7 +302,7 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
         const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `);
         const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master(year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2) select year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2 from pet_master where id = '${petRegInfo[0].master_id}' `);
         let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
-                              submit_source,audit_status,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
+                              submit_source,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
         const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = ${dogRegNum} `);
         await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise]);
     }
