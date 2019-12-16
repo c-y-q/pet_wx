@@ -526,7 +526,6 @@ router.post("/findPetInfosByIdNum", async (req, res) => {
         unionId,
         obj.id
       );
-      console.log(396, judeWxUserIsBindPet);
       petRegInfo.push({
         isBindMe: judeWxUserIsBindPet.length > 0,
         petType: obj.breed,
@@ -908,22 +907,21 @@ router.post("/yearCheck", async (req, res) => {
     };
   }
   //判断主pet_register_info犬证状态是否异常
-  const dogRegNumIsOk = await service.queryDogRegNumIsOk(petRegId);
-  if (!dogRegNumIsOk) {
+  const canYearCheckResult = await service.findPetState(petRegId);
+  if ([2, 4, 5].includes(canYearCheckResult[0].pet_state)) {
     throw {
       respCode: "0001",
       respMsg: " 犬证信息异常，请到人工窗口办理!"
     };
   }
-  //判断是否有正在审核的犬证，如果有，不能进行年审
   const isHasYearCheck = await service.findPreventionInfo(petRegId);
-  if (isHasYearCheck[0].pet_state == 3) {
+  //判断是否有正在审核的犬证，如果有，不能进行年审
+  if (canYearCheckResult[0].pet_state == 3 || (isHasYearCheck.length > 0 && isHasYearCheck[0].pet_state == 3)) {
     throw {
       respCode: "0001",
       respMsg: " 您有正在年审的信息，请勿重复提交!"
     };
   }
-
   const options = {
     year: moment()
       .add(1, "years")
@@ -1477,4 +1475,5 @@ router.post('/getPriceAndExressCost', async (req, res) => {
     getPrice
   })
 })
+
 module.exports = router;

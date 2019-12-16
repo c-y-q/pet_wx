@@ -79,7 +79,7 @@ router.post('/wpPay', async (req, res) => {
         msgSrc: "WWW.HBZNEWL.COM",
         msgSrcId: "6594",
         md5Key: md5Key,
-        notifyUrl: "http://wxpet.free.idcfengye.com/pay/wpPayNotify",
+        notifyUrl: 'http://eggsy.free.idcfengye.com/pay/wpPayNotify' //"http://wxpet.free.idcfengye.com/pay/wpPayNotify",
     }
 
     let rest = {};
@@ -135,7 +135,7 @@ router.post('/wpPay', async (req, res) => {
 })
 
 router.post('/wpPayNotify', async (req, res) => {
-    console.log('------req.body----------', req.body);
+    console.log('------req.body----------', req.body, );
     const merOrderId = req.body.merOrderId;
     console.log('------merOrderId----------', merOrderId);
     /*

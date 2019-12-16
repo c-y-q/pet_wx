@@ -744,3 +744,9 @@ exports.queryDogRegNumIsOk = async (petRegId) => {
     const result = await conn.query(sql, [petRegId]);
     return result.length > 0 && result[0].pet_state == 1;
 }
+
+
+exports.findPetState = async (petRegId) => {
+    const sql = " select expire_time,pet_state from pet_register_info where id = ? ";
+    return await conn.query(sql, [petRegId]);
+};
