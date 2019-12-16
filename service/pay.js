@@ -86,7 +86,7 @@ exports.queryRegInfoAuditStatus = async creatorId => {
 
 exports.updateOrder = async (orderNum, orderStatus, payTime, targetOrderId) => {
   let sql = ` update wx_order set order_status = ?, pay_time = ?,trade_num = ?   where order_num = ?  `;
-  return await conn.query(sql, [orderStatus, payTime, orderNum, targetOrderId]);
+  return await conn.query(sql, [orderStatus, payTime, targetOrderId, orderNum]);
 };
 
 exports.updateRegisterPayType = async (masterId, payType) => {

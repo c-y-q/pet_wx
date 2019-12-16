@@ -135,7 +135,6 @@ router.post('/wpPay', async (req, res) => {
 })
 
 router.post('/wpPayNotify', async (req, res) => {
-    console.log('------req.body----------', req.body, );
     const merOrderId = req.body.merOrderId;
     console.log('------merOrderId----------', merOrderId);
     /*
@@ -152,45 +151,51 @@ router.post('/wpPayNotify', async (req, res) => {
         payTime,
         sign
     } = req.body;
+    console.log(154, req.body, typeof (req.body))
+    console.log(155, req.body.targetOrderId);
     /**
      * 1.2查询本系统订单状态，获取金额进行对比
      */
-    const orderInfo = await service.queryOrder('', merOrderId);
-    if (!orderInfo.length) {
-        res.send('FAILED');
-        return;
-    }
-    const cacheParams = await cache.get(`${merOrderId}`);
-    if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.pay.mid && tid == config.pay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
-        res.send('FAILED');
-        return;
-    }
-    res.send('SUCCESS');
-    /**
-     * 2.1更新订单状态
-     */
-    await service.updateOrder(merOrderId, 1, moment().format('YYYYMMDDHHmmss'), targetOrderId);
-    if (cacheParams) {
-        let addPetRegAllInfoResult, yearCheckResult, oldUpperResult;
-        const resdisParams = JSON.parse(cacheParams);
-        console.log(177, resdisParams)
-        //查询petRegId信息是否已存在wx_pet_reg_info
-        const judePetExists = await registerService.petRegIdPay(orderInfo[0].pet_id);
-        //2.2 支付成功后，从redis中取出数据，保存到微信表中.
-        if (orderInfo[0].order_source == 1 && judePetExists.length == 0) { //新登记
-            //添加新注册信息
-            addPetRegAllInfoResult = await registerService.addPetRegAllInfo(resdisParams);
-        } else if (orderInfo[0].order_source == 2) { //年审
-            yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum, merOrderId);
-        } else if (orderInfo[0].order_source == 3) { //旧证升级
-            oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid, resdisParams.orderNum);
+    try {
+        const orderInfo = await service.queryOrder('', merOrderId);
+        if (!orderInfo.length) {
+            res.send('FAILED');
+            return;
         }
-        await cache.del(`${merOrderId}`);
-        console.log('微信支付回调成功，数据库处理结果', JSON.stringify({
-            addPetRegAllInfoResult,
-            yearCheckResult,
-            oldUpperResult
-        }))
+        const cacheParams = await cache.get(`${merOrderId}`);
+        if (!(status == 'TRADE_SUCCESS' && targetSys == 'WXPay' && mid == config.pay.mid && tid == config.pay.tid && orderInfo[0].total_price * 100 == totalAmount)) {
+            res.send('FAILED');
+            return;
+        }
+        res.send('SUCCESS');
+        /**
+         * 2.1更新订单状态
+         */
+        await service.updateOrder(merOrderId, 1, moment().format('YYYYMMDDHHmmss'), req.body.targetOrderId);
+        if (cacheParams) {
+            let addPetRegAllInfoResult, yearCheckResult, oldUpperResult;
+            const resdisParams = JSON.parse(cacheParams);
+            console.log(177, resdisParams)
+            //查询petRegId信息是否已存在wx_pet_reg_info
+            const judePetExists = await registerService.petRegIdPay(orderInfo[0].pet_id);
+            //2.2 支付成功后，从redis中取出数据，保存到微信表中.
+            if (orderInfo[0].order_source == 1 && judePetExists.length == 0) { //新登记
+                //添加新注册信息
+                addPetRegAllInfoResult = await registerService.addPetRegAllInfo(resdisParams);
+            } else if (orderInfo[0].order_source == 2) { //年审
+                yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum, merOrderId);
+            } else if (orderInfo[0].order_source == 3) { //旧证升级
+                oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid, resdisParams.orderNum);
+            }
+            await cache.del(`${merOrderId}`);
+            console.log('微信支付回调成功，数据库处理结果', JSON.stringify({
+                addPetRegAllInfoResult,
+                yearCheckResult,
+                oldUpperResult
+            }))
+        }
+    } catch (error) {
+        console.log(199, error)
     }
 
 })

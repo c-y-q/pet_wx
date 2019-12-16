@@ -287,22 +287,22 @@ exports.hasUserBindSysInfo = async idNumber => {
     return result;
 };
 
-//年审
+//todo有效期和延续登记时间也需要变 
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
     // const petRegSql = ` update pet_register_info set pet_state = 3 ,submit_source = 2  where dog_reg_num = ? `;
-    const wxquerySql = ` select * from wx_pet_register_info where dog_reg_num = ${dogRegNum} `;
+    const wxquerySql = ` select * from wx_pet_register_info where dog_reg_num = '${dogRegNum}' `;
     const wxpetRegResult = await conn.query(wxquerySql);
     /**
      * 复制防疫信息表，复制主人表，复制犬登记表
      */
     if (wxpetRegResult.length == 0) {
-        const petRegInfo = await conn.query(`select id,master_id from wx_pet_register_info wx_pet_register_info where dog_reg_num = ${dogRegNum}`);
+        const petRegInfo = await conn.query(`select id,master_id from pet_register_info  where dog_reg_num = ${dogRegNum} `);
 
         const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `);
-        const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master select * from pet_master where id = '${petRegInfo[0].master_id}' `);
-        let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time
+        const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master(year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2) select year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2 from pet_master where id = '${petRegInfo[0].master_id}' `);
+        let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
                               submit_source,audit_status,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
-        const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = '${dogRegNum}' `);
+        const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = ${dogRegNum} `);
         await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise]);
     }
     // const petRegSql = ` update pet_register_info set submit_source = 2  where dog_reg_num = ? `;
