@@ -79,7 +79,6 @@ exports.addPetregister = async (
         audit_time: options.auditTime || "",
         deliver_time: options.deliverTime || "",
         audit_type: 1,
-        locking: 1,
         latest_order_num: orderNum
     };
     return await conn.query(sql, petRegModel);
@@ -220,10 +219,7 @@ exports.queryRegList = async (openId, unionId) => {
     const wxPubRegIds = wxPubRegIdsResult.map(
         obj => obj.pet_reg_id && obj.pet_reg_id
     );
-    // const petRegInfoIdsResult = await conn.query(`select id from pet_register_info where wx_openId = ? and pay_type <> -1 `, [openId]);
-    // const petRegInfoIds = petRegInfoIdsResult.map(obj => obj.id);
     const resultRegIds = Array.from(new Set(wxPubRegIds));
-    console.log(169, resultRegIds);
     if (resultRegIds.length == 0) {
         return [];
     }
@@ -283,11 +279,7 @@ exports.judeWxUserIsBindPet = async (openId, unionId, petRegId) => {
     return result;
 };
 
-exports.hasUserBindSysInfo = async idNumber => {
-    const sql = `select id from wx_pet_master where id_number = ? `;
-    const result = await conn.query(sql, [idNumber]);
-    return result;
-};
+
 
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
     const wxquerySql = ` select * from wx_pet_register_info where dog_reg_num = '${dogRegNum}' `;
@@ -302,9 +294,9 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
         let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
                               submit_source, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
         const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = ${dogRegNum} `);
-        const updatLockingPromise = conn.query(`update pet_register_info set locking = 1  where dog_reg_num = ${dogRegNum} `);
-        await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise, updatLockingPromise]);
+        await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise]);
     }
+    await conn.query(` update pet_register_info set locking = 1  where dog_reg_num = ${dogRegNum} `);
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
         pet_id: petRegId,
@@ -729,4 +721,11 @@ exports.queryDogRegNumIsOk = async (petRegId) => {
 exports.findPetState = async (petRegId) => {
     const sql = " select expire_time,pet_state from pet_register_info where id = ? ";
     return await conn.query(sql, [petRegId]);
+};
+
+exports.hasUserBindSysInfo = async (idNumber) => {
+    const resul1 = conn.query('select id from wx_pet_master where id_number = ?', [idNumber]);
+    const result2 = conn.query('select m.id from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3) and id_number = ?', [idNumber]);
+    const [wxMaster, petMaster] = await Promise.all([resul1, resul2]);
+    return (wxMaster && wxMaster.length > 0) && (petMaster && petMaster.length > 0);
 };

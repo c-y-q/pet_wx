@@ -1020,6 +1020,15 @@ router.post('/upperldDogRegNum', async (req, res) => {
       respMsg: " to bind wxpulic !"
     };
   }
+
+  //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
+  const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
+  if (hasUserBindSysInfo) {
+    throw {
+      respCode: "0001",
+      respMsg: "每个人只能申请一条犬证信息！"
+    };
+  }
   const options = {
     djhm: params.djhm || '',
     name: params.name || '',
@@ -1185,7 +1194,7 @@ router.post('/addpetRegist', async (req, res) => {
   }
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
   const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
-  if (hasUserBindSysInfo.length > 0) {
+  if (hasUserBindSysInfo) {
     throw {
       respCode: "0001",
       respMsg: "每个人只能申请一条犬证信息！"
