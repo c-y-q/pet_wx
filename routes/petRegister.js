@@ -812,7 +812,7 @@ router.post("/updatePetRegInfo", async (req, res, next) => {
   if (hasUserBindSysInfo1) {
     throw {
       respCode: "0001",
-      respMsg: "该身份证申请的宠物信息不存在！"
+      respMsg: "每个人只能申请一条犬证信息！"
     };
   }
   if (!regPhoneNum.test(params.contactPhone)) {
@@ -908,11 +908,14 @@ router.post("/yearCheck", async (req, res) => {
   }
   //判断缴费记录
   const payMentResult = await service.queryPayMentRecord(petRegId);
-  if (payMentResult.length) {
-
+  const canYearCheckResult = await service.findPetState(petRegId);
+  if (payMentResult.length && canYearCheckResult[0].pet_state == 3) {
+    throw {
+      respCode: "0001",
+      respMsg: " 有未支付的年审订单，请到人工窗口办理!"
+    };
   }
   //判断主pet_register_info犬证状态是否异常
-  const canYearCheckResult = await service.findPetState(petRegId);
   if ([2, 4, 5].includes(canYearCheckResult[0].pet_state)) {
     throw {
       respCode: "0001",
@@ -921,7 +924,8 @@ router.post("/yearCheck", async (req, res) => {
   }
   const isHasYearCheck = await service.findPreventionInfo(petRegId);
   //判断是否有正在审核的犬证，如果有，不能进行年审
-  if ((canYearCheckResult[0].pet_state == 3) || (isHasYearCheck.length > 0 && isHasYearCheck[0].pet_state == 3)) {
+  //canYearCheckResult[0].pet_state == 3需要修改
+  if (isHasYearCheck.length > 0 && isHasYearCheck[0].pet_state == 3) {
     throw {
       respCode: "0001",
       respMsg: " 您有正在年审的信息，请勿重复提交!"

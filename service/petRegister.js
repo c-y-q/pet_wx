@@ -744,6 +744,6 @@ exports.hasUserBindSysInfo = async (idNumber) => {
 };
 
 exports.queryPayMentRecord = async (petRegId) => {
-    const sql = ' select * from pet_payment_record where pay_status <> 1 and pet_id = ? ';
+    const sql = ' select * from pet_payment_record where pay_status = 0 and pet_id = ? ';
     return await conn.query(sql, [petRegId]);
 }
