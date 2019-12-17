@@ -79,7 +79,7 @@ exports.addPetregister = async (
         audit_time: options.auditTime || "",
         deliver_time: options.deliverTime || "",
         audit_type: 1,
-        iswx_online: 1,
+        locking: 1,
         latest_order_num: orderNum
     };
     return await conn.query(sql, petRegModel);
@@ -300,10 +300,10 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
         const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `);
         const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master(year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2) select year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2 from pet_master where id = '${petRegInfo[0].master_id}' `);
         let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
-                              submit_source,audit_remarks, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
+                              submit_source, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
         const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = ${dogRegNum} `);
-        const updatiSwxOnlinePromise = conn.query(`update pet_register_info set iswx_online = 1  where dog_reg_num = ${dogRegNum} `);
-        await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise, updatiSwxOnlinePromise]);
+        const updatLockingPromise = conn.query(`update pet_register_info set locking = 1  where dog_reg_num = ${dogRegNum} `);
+        await Promise.all([copyToWxPrevPromise, copyToWxPetMasterPromise, copyToWxPetRegPromise, updatLockingPromise]);
     }
     const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
     const yearRecordModel = {
