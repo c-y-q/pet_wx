@@ -297,7 +297,6 @@ exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
      */
     if (wxpetRegResult.length == 0) {
         const petRegInfo = await conn.query(`select id,master_id from pet_register_info  where dog_reg_num = ${dogRegNum} `);
-
         const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `);
         const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master(year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2) select year,pet_reg_id,photo_url,creator_id,create_time,update_time,photo_url2 from pet_master where id = '${petRegInfo[0].master_id}' `);
         let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
