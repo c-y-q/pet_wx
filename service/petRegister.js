@@ -742,10 +742,7 @@ exports.hasUserBindSysInfo = async (idNumber) => {
     }
     return flag;
 };
-exports.findIsWxExists = async (idNumber) => {
-    const resul1 = conn.query('select id from wx_pet_master where id_number = ?', [idNumber]);
-    return resul1;
-}
+
 exports.queryPayMentRecord = async (petRegId) => {
     const sql = ' select * from pet_payment_record where pay_status <> 1 and pet_id = ? ';
     return await conn.query(sql, [petRegId]);
