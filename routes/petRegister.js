@@ -261,6 +261,7 @@ router.post("/wxLogin", async (req, res, next) => {
     data
   });
 });
+
 router.post("/queryRegStatu", async (req, res) => {
   const openId = req.body.openid;
   const result = await service.queryRegStatu(openId);
@@ -806,8 +807,16 @@ router.post("/updatePetRegInfo", async (req, res, next) => {
     };
   }
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
-  const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
-  if (hasUserBindSysInfo.length == 0) {
+  const hasUserBindSysInfo = await service.findIsWxExists(params.idNumber);
+  if (hasUserBindSysInfo && hasUserBindSysInfo.length) {
+    throw {
+      respCode: "0001",
+      respMsg: " 每个人只能申请一条犬证信息！"
+    };
+  }
+  //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
+  const hasUserBindSysInfo1 = await service.hasUserBindSysInfo(params.idNumber);
+  if (hasUserBindSysInfo1) {
     throw {
       respCode: "0001",
       respMsg: "该身份证申请的宠物信息不存在！"
@@ -819,9 +828,7 @@ router.post("/updatePetRegInfo", async (req, res, next) => {
       respMsg: " lost contactPhone"
     };
   }
-
   const result = await service.updatePetRegInfo(params);
-
   res.json({
     status: 200,
     result,
@@ -906,6 +913,11 @@ router.post("/yearCheck", async (req, res) => {
       respMsg: " dogRegNum not  correct!"
     };
   }
+  //判断缴费记录
+  const payMentResult = await service.queryPayMentRecord(petRegId);
+  if (payMentResult.length) {
+
+  }
   //判断主pet_register_info犬证状态是否异常
   const canYearCheckResult = await service.findPetState(petRegId);
   if ([2, 4, 5].includes(canYearCheckResult[0].pet_state)) {
@@ -916,25 +928,19 @@ router.post("/yearCheck", async (req, res) => {
   }
   const isHasYearCheck = await service.findPreventionInfo(petRegId);
   //判断是否有正在审核的犬证，如果有，不能进行年审
-  if (canYearCheckResult[0].pet_state == 3 || (isHasYearCheck.length > 0 && isHasYearCheck[0].pet_state == 3)) {
+  if ((canYearCheckResult[0].pet_state == 3) || (isHasYearCheck.length > 0 && isHasYearCheck[0].pet_state == 3)) {
     throw {
       respCode: "0001",
       respMsg: " 您有正在年审的信息，请勿重复提交!"
     };
   }
   const options = {
-    year: moment()
-      .add(1, "years")
-      .format("YYYY"),
+    year: moment().add(1, "years").format("YYYY"),
     photoUrl: req.body.photoUrl,
     photoUrl2: req.body.photoUrl2,
     updateTime: moment().format("YYYYMMDDHHmmss")
   };
   const orderNum = `6594${moment().format("YYYYMMDDHHmmss")}${new Date().getTime()}`;
-  // const orderNum = `${moment().format(
-  //   "YYYYMMDDHHmmss"
-  // )}${new Date().getTime()}${orderService.getMyUUId(3)}`;
-  // const yearCheckResult = await service.yearCheck(petRegId, options, dogRegNum);
   const price = await orderService.queryPrice(2);
   const orderModel = {
     order_num: orderNum,
@@ -947,7 +953,6 @@ router.post("/yearCheck", async (req, res) => {
     expresscost: 0
   };
   await orderService.addWxOrder(orderModel);
-  // const resData = await orderService.unfolderToPay(openId, orderNum, totalPrice);
   const yearCheckredisParams = {
     petRegId,
     params: options,
@@ -1192,6 +1197,13 @@ router.post('/addpetRegist', async (req, res) => {
       respMsg: " lost idNumber"
     };
   }
+  const hasUserBindSysInfo1 = await service.findIsWxExists(params.idNumber);
+  if (hasUserBindSysInfo1 && hasUserBindSysInfo1.length) {
+    throw {
+      respCode: "0001",
+      respMsg: "每个人只能申请一条犬证信息！"
+    }
+  }
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
   const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
   if (hasUserBindSysInfo) {
@@ -1215,6 +1227,7 @@ router.post('/addpetRegist', async (req, res) => {
 
 
   const price = await orderService.queryPrice(1);
+  console.log(1223, params.receive)
   const receive = parseInt(params.receive) || 0;
   let totalPrice = 0,
     expresscost = 0;
@@ -1223,12 +1236,12 @@ router.post('/addpetRegist', async (req, res) => {
     totalPrice = price;
   } else if (receive == 2) {
     //快递
-    //查询快递金额并加上
     expresscost = await orderService.queryExpressCost();
     totalPrice = price + expresscost;
   } else {
     totalPrice = 9999;
   }
+  console.log(1235, totalPrice, expresscost);
   const orderModel = {
     order_num: orderNum,
     creator: params.openid,
@@ -1237,9 +1250,8 @@ router.post('/addpetRegist', async (req, res) => {
     order_source: 1,
     total_price: totalPrice,
     pet_id: petRegId,
-    expresscost
+    expresscost: expresscost
   };
-
   await orderService.addWxOrder(orderModel);
   //1.调用统一下单接口
   // const resData = await orderService.unfolderToPay(params.openid, orderNum, totalPrice);
@@ -1485,4 +1497,11 @@ router.post('/getPriceAndExressCost', async (req, res) => {
   })
 })
 
+router.post('/hasUserBindSysInfo', async (req, res) => {
+  const result = await service.hasUserBindSysInfo(req.body.idNumber);
+  console.log(1495, result)
+  res.json({
+    result
+  })
+})
 module.exports = router;

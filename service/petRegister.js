@@ -724,8 +724,29 @@ exports.findPetState = async (petRegId) => {
 };
 
 exports.hasUserBindSysInfo = async (idNumber) => {
-    const resul1 = conn.query('select id from wx_pet_master where id_number = ?', [idNumber]);
-    const result2 = conn.query('select m.id from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3) and id_number = ?', [idNumber]);
-    const [wxMaster, petMaster] = await Promise.all([resul1, resul2]);
-    return (wxMaster && wxMaster.length > 0) && (petMaster && petMaster.length > 0);
+    let flag = false;
+    const resul1 = conn.query('select m.* from wx_pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3,0) and m.id_number = ?', [idNumber]);
+    const result2 = conn.query('select m.* from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3,0) and id_number = ?', [idNumber]);
+    const result3 = conn.query('select * from wx_pet_master where id_number = ? ', [idNumber]);
+    const result4 = conn.query('select * from pet_master where id_number = ? ', [idNumber]);
+    const [wxMaster, petMaster, wxExistsMaster, existsMaster] = await Promise.all([resul1, result2, result3, result4]);
+    console.log(733, wxExistsMaster, existsMaster)
+    if (wxMaster && wxMaster.length > 0) {
+        flag = true;
+    }
+    if (petMaster && petMaster.length) {
+        flag = true;
+    }
+    if (wxExistsMaster.length > 0 && existsMaster.length == 0) {
+        flag = true;
+    }
+    return flag;
 };
+exports.findIsWxExists = async (idNumber) => {
+    const resul1 = conn.query('select id from wx_pet_master where id_number = ?', [idNumber]);
+    return resul1;
+}
+exports.queryPayMentRecord = async (petRegId) => {
+    const sql = ' select * from pet_payment_record where pay_status <> 1 and pet_id = ? ';
+    return await conn.query(sql, [petRegId]);
+}

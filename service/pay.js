@@ -51,7 +51,7 @@ exports.getMyUUId = n => {
   return str;
 };
 
-exports.addWxOrder = async options => {
+exports.addWxOrder = async (options) => {
   const sql = `insert into wx_order set ? `;
 
   return await conn.query(sql, options);

@@ -16,6 +16,7 @@ const {
  * 统一下单
  */
 router.post('/wpPay', async (req, res) => {
+    console.log(19, req.body.orderNum)
     //1.判断微信用户是否关注公众号
     const {
         openid,
@@ -96,7 +97,6 @@ router.post('/wpPay', async (req, res) => {
     for (const str in rest) {
         longStr += str + '=' + rest[str] + '&';
     }
-    console.log('---待签名参数---', longStr);
     let signs = md5(longStr.substring(0, longStr.length - 1) + 'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE'); // 移除最后一个 & 符号 生成签名
     params.sign = signs;
     // const sign = longStr + 'sign=' + signs;
@@ -111,23 +111,12 @@ router.post('/wpPay', async (req, res) => {
         url: 'https://qr.chinaums.com/netpay-route-server/api/' //https://api-mop.chinaums.com/v1/netpay/wx/unified-order
     } // http://58.247.0.18:29015/v1/netpay/wx/unified-order
     const data = await axios(requestOptins);
-    console.log(120, data);
     if (data.data.status != 'WAIT_BUYER_PAY' || data.data.errCode != 'SUCCESS' || data.data.targetStatus != "SUCCESS|SUCCESS" || data.data.targetSys != 'WXPay') {
         throw {
             status: 400,
             msg: 'order is not right!'
         }
     }
-    // const resData = {
-    //     appId: data.data.miniPayRequest.appId,
-    //     nonceStr: data.data.miniPayRequest.nonceStr,
-    //     package: data.data.miniPayRequest.package,
-    //     signType: data.data.miniPayRequest.signType,
-    //     timeStamp: data.data.miniPayRequest.timeStamp,
-    //     paySign: data.data.miniPayRequest.paySign,
-    // }
-    // console.log(128, resData);
-
     res.json({
         status: 200,
         result: data.data.miniPayRequest
