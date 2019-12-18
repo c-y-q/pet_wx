@@ -766,49 +766,67 @@ exports.findPetState = async petRegId => {
 };
 
 exports.hasUserBindSysInfo = async idNumber => {
-  let flag = false;
-  const resul1 = conn.query(
-    "select m.* from wx_pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3,0) and m.id_number = ?",
+  //   let flag = false;
+  //   const resul1 = conn.query(
+  //     "select m.* from wx_pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3,0) and m.id_number = ?",
+  //     [idNumber]
+  //   );
+  //   const result2 = conn.query(
+  //     "select m.* from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3,0) and id_number = ?",
+  //     [idNumber]
+  //   );
+  //   const result3 = conn.query(
+  //     "select * from wx_pet_master where id_number = ? ",
+  //     [idNumber]
+  //   );
+  //   const result4 = conn.query("select * from pet_master where id_number = ? ", [
+  //     idNumber
+  //   ]);
+  //   const [
+  //     wxMaster,
+  //     petMaster,
+  //     wxExistsMaster,
+  //     existsMaster
+  //   ] = await Promise.all([resul1, result2, result3, result4]);
+  //   console.log(733, wxExistsMaster, existsMaster);
+  //   if (wxMaster && wxMaster.length > 0) {
+  //     flag = true;
+  //   }
+  //   if (petMaster && petMaster.length) {
+  //     flag = true;
+  //   }
+  //   if (wxExistsMaster.length > 0 && existsMaster.length == 0) {
+  //     flag = true;
+  //   }
+  //   /**
+  //    * 特殊情况判断
+  //    */
+  //   const zhuxiaoPetReg = await conn.query(
+  //     ` select m.* from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(2,4,5) and m.id_number = ?`,
+  //     [idNumber]
+  //   );
+  //   if (wxExistsMaster.length > 0 && zhuxiaoPetReg.length > 0) {
+  //     flag = true;
+  //   }
+  //   return flag;
+  let result1 = conn.query(
+    "select m.* from pet_master m,pet_register_info p where m.id = p.master_id and p.pet_state in(0,1,3) and m.id_number = ?",
     [idNumber]
   );
-  const result2 = conn.query(
-    "select m.* from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(1,3,0) and id_number = ?",
+
+  // 小程序提交情况
+  let result2 = conn.query(
+    "select m.* from wx_pet_master m,wx_pet_register_info p where m.id = p.master_id and p.pet_state in(0,1,3) and p.audit_status <> 1 and m.id_number = ?",
     [idNumber]
   );
-  const result3 = conn.query(
-    "select * from wx_pet_master where id_number = ? ",
-    [idNumber]
-  );
-  const result4 = conn.query("select * from pet_master where id_number = ? ", [
-    idNumber
-  ]);
-  const [
-    wxMaster,
-    petMaster,
-    wxExistsMaster,
-    existsMaster
-  ] = await Promise.all([resul1, result2, result3, result4]);
-  console.log(733, wxExistsMaster, existsMaster);
-  if (wxMaster && wxMaster.length > 0) {
-    flag = true;
+
+  const [result3, result4] = await Promise.all([result1, result2]);
+
+  if (result3.length > 0 || result4.length > 0) {
+    return true;
   }
-  if (petMaster && petMaster.length) {
-    flag = true;
-  }
-  if (wxExistsMaster.length > 0 && existsMaster.length == 0) {
-    flag = true;
-  }
-  /**
-   * 特殊情况判断
-   */
-  const zhuxiaoPetReg = await conn.query(
-    ` select m.* from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(2,4,5) and m.id_number = ?`,
-    [idNumber]
-  );
-  if (wxExistsMaster.length > 0 && zhuxiaoPetReg.length > 0) {
-    flag = true;
-  }
-  return flag;
+
+  return false;
 };
 
 exports.queryPayMentRecord = async petRegId => {
