@@ -823,14 +823,24 @@ router.post("/updatePetRegInfo", async (req, res, next) => {
       respMsg: " lost idNumber"
     };
   }
-
+  /**
+   * 判断是否审核通过，不通过的，修改
+   */
+  const findWxPetRegByIdNum = await service.findWxPetRegByIdNum(
+    params.idNumber,
+    petRegId.petRegId
+  );
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
-  const hasUserBindSysInfo1 = await service.hasUserBindSysInfo(params.idNumber);
-  if (hasUserBindSysInfo1) {
-    throw {
-      respCode: "0001",
-      respMsg: "每个人只能申请一条犬证信息！"
-    };
+  if (!(findWxPetRegByIdNum && findWxPetRegByIdNum.length > 0)) {
+    const hasUserBindSysInfo1 = await service.hasUserBindSysInfo(
+      params.idNumber
+    );
+    if (hasUserBindSysInfo1) {
+      throw {
+        respCode: "0001",
+        respMsg: "每个人只能申请一条犬证信息！"
+      };
+    }
   }
   if (!regPhoneNum.test(params.contactPhone)) {
     throw {

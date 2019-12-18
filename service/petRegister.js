@@ -842,3 +842,10 @@ exports.queryPayMentRecord = async petRegId => {
 //     deleteWxPetPrevPromise
 //   ]);
 // };
+
+exports.findWxPetRegByIdNum = async (idNumber, petRegId) => {
+  return await conn.query(
+    "select m.* from wx_pet_master m,wx_pet_register_info  p where p.master_id = m.id and  id_number = ? and p.id = ? and  p.audit_status =2",
+    [idNumber, petRegId]
+  );
+};
