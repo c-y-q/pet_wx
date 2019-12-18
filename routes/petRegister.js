@@ -828,7 +828,7 @@ router.post("/updatePetRegInfo", async (req, res, next) => {
    */
   const findWxPetRegByIdNum = await service.findWxPetRegByIdNum(
     params.idNumber,
-    petRegId.petRegId
+    params.petRegId
   );
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
   if (!(findWxPetRegByIdNum && findWxPetRegByIdNum.length > 0)) {

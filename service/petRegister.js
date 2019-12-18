@@ -798,6 +798,16 @@ exports.hasUserBindSysInfo = async idNumber => {
   if (wxExistsMaster.length > 0 && existsMaster.length == 0) {
     flag = true;
   }
+  /**
+   * 特殊情况判断
+   */
+  const zhuxiaoPetReg = await conn.query(
+    ` select m.* from pet_master m,pet_register_info p where  m.id = p.master_id and p.pet_state in(2,4,5) and m.id_number = ?`,
+    [idNumber]
+  );
+  if (wxExistsMaster.length > 0 && zhuxiaoPetReg.length > 0) {
+    flag = true;
+  }
   return flag;
 };
 
