@@ -632,13 +632,13 @@ exports.addinformations = async (params, petRegId, uuid, orderNum) => {
                             receive_addr,
                             receive,
                             audit_status,
-                            pay_type
-
+                            pay_type,
+                            latest_order_num
                            )
                        VALUES
                         ('${petRegId}','${handleParams.petName}',${handleParams.gender},1,0,'${handleParams.breed}','${handleParams.coatColor}','${handleParams.birthday}','${handleParams.areaCode}',
                         '${datetime}','${datetime}','${addtime}',2,'${handleParams.petPhotoUrl}','${uuid}','${handleParams.openid}','${createTime}',3,${handleParams.oldId},
-                        '${handleParams.receiveName}','${handleParams.receivePhone}','${handleParams.receiveAddr}',${handleParams.receive},0,1)`;
+                        '${handleParams.receiveName}','${handleParams.receivePhone}','${handleParams.receiveAddr}',${handleParams.receive},0,1,${orderNum})`;
 
     const mastersql = `INSERT INTO wx_pet_master (
         id,
