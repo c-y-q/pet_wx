@@ -171,7 +171,7 @@ router.post('/wpPayNotify', async (req, res) => {
             } else if (orderInfo[0].order_source == 2) { //年审
                 yearCheckResult = await registerService.yearCheck(orderInfo[0].creator, resdisParams.petRegId, resdisParams.params, resdisParams.dogRegNum, merOrderId);
             } else if (orderInfo[0].order_source == 3) { //旧证升级
-                oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid, resdisParams.orderNum);
+                oldUpperResult = await registerService.upperldDogRegNum(resdisParams.params, resdisParams.petRegId, resdisParams.uuid, merOrderId);
             }
             await cache.del(`${merOrderId}`);
             console.log('微信支付回调成功，数据库处理结果', JSON.stringify({
