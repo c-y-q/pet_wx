@@ -149,10 +149,10 @@ router.post('/wpPayNotify', async (req, res) => {
         }
         md5str = md5str.slice(0, -1) + md5Key;
         let mysign = md5(md5str).toUpperCase();
-        if (!wxResSign || !(mysign == wxResSign)) {
-            res.send('FAILED');
-            return;
-        }
+        // if (!wxResSign || !(mysign == wxResSign)) {
+        //     res.send('FAILED');
+        //     return;
+        // }
         /**
          * 2.1更新订单状态
          */

@@ -44,6 +44,7 @@ exports.addPetregister = async (
     orderNum
 ) => {
     const sql = `insert into wx_pet_register_info set ? `;
+    console.log(47, options)
     const petRegModel = {
         id: petRegId,
         pet_name: options.petName || "",
@@ -63,9 +64,9 @@ exports.addPetregister = async (
         pet_category_id: options.petCategoryId || "",
         pet_state: 0,
         pay_type: 1,
-        first_reg_time: moment().format("YYYYMMDDHHmmss"),
-        expire_time: addyear(),
-        renew_time: moment().format("YYYYMMDDHHmmss"),
+        first_reg_time: options.firstRegTime && moment(options.firstRegTime, 'YYYY-MM-DD').format("YYYYMMDDHHmmss") || moment().format("YYYYMMDDHHmmss"),
+        expire_time: options.firstRegTime && moment(options.firstRegTime, 'YYYY-MM-DD').format("YYYYMMDDHHmmss") || addyear(),
+        renew_time: options.firstRegTime && moment(options.firstRegTime, 'YYYY-MM-DD').format("YYYYMMDDHHmmss") || moment().format("YYYYMMDDHHmmss"),
         change_time: "",
         logout_time: "",
         create_time: moment().format("YYYYMMDDHHmmss"),
@@ -278,36 +279,66 @@ exports.judeWxUserIsBindPet = async (openId, unionId, petRegId) => {
 };
 
 exports.yearCheck = async (openId, petRegId, options, dogRegNum, orderNum) => {
-    const wxquerySql = ` select * from wx_pet_register_info where dog_reg_num = '${dogRegNum}' `;
+    const wxquerySql = ` select * from wx_pet_register_info where dog_reg_num = '${dogRegNum}' and id= '${petRegId}'`;
     const wxpetRegResult = await conn.query(wxquerySql);
+    let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
+                              submit_source, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
+    const petInfoSql = `select ${petRegCloumn} from pet_register_info  where dog_reg_num = ${dogRegNum} and id= '${petRegId}'`;
+    const petRegInfo = await conn.query(petInfoSql);
     /**
      * 复制防疫信息表，复制主人表，复制犬登记表
      */
     if (wxpetRegResult.length == 0) {
-        const petRegInfo = await conn.query(
-            `select id,master_id from pet_register_info  where dog_reg_num = ${dogRegNum} `
-        );
-        const copyToWxPrevPromise = conn.query(
-            `insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `
-        );
-        const copyToWxPetMasterPromise = conn.query(
-            `insert into wx_pet_master select * from pet_master where id = '${petRegInfo[0].master_id}' `
-        );
-        let petRegCloumn = `id,pet_name,gender,pet_state,pet_category_id,breed,coat_color,birthday,area_code,dog_reg_num,first_reg_time,renew_time,expire_time,change_time,logout_time,
-                              submit_source, pet_photo_url,master_id,creator_id,create_time,update_time,pay_type,punish_info`;
-        const copyToWxPetRegPromise = conn.query(
-            `insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = ${dogRegNum} `
-        );
+        const copyToWxPrevPromise = conn.query(`insert into wx_pet_prevention_img select * from pet_prevention_img where pet_reg_id = '${petRegInfo[0].id}' `);
+        const copyToWxPetMasterPromise = conn.query(`insert into wx_pet_master select * from pet_master where id = '${petRegInfo[0].master_id}' `);
+        const copyToWxPetRegPromise = conn.query(`insert into wx_pet_register_info(${petRegCloumn}) select ${petRegCloumn} from pet_register_info where dog_reg_num = ${dogRegNum} and id= '${petRegId}' `);
         await Promise.all([
             copyToWxPrevPromise,
             copyToWxPetMasterPromise,
             copyToWxPetRegPromise
         ]);
     }
-    await conn.query(
-        ` update pet_register_info set locking = 1  where dog_reg_num = ${dogRegNum} `
-    );
-    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? `;
+    /**
+     * 同步petRegInfo信息
+     */
+    const sysChronizePetRegInfoSql = `update wx_pet_register_info  
+                                            set pet_name ='${petRegInfo[0].pet_name}',
+                                            gender ='${petRegInfo[0].gender}',
+                                            pet_state ='${petRegInfo[0].pet_state}',
+                                            pet_category_id ='${petRegInfo[0].pet_category_id}',
+                                            breed ='${petRegInfo[0].breed}',
+                                            coat_color ='${petRegInfo[0].coat_color}',
+                                            birthday ='${petRegInfo[0].birthday}',
+                                            area_code ='${petRegInfo[0].area_code}',
+                                            first_reg_time ='${petRegInfo[0].first_reg_time}',
+                                            renew_time ='${petRegInfo[0].renew_time}',
+                                            expire_time ='${petRegInfo[0].expire_time}',
+                                            change_time ='${petRegInfo[0].change_time}',
+                                            logout_time ='${petRegInfo[0].logout_time}',
+                                            pet_photo_url ='${petRegInfo[0].pet_photo_url}',
+                                            master_id ='${petRegInfo[0].master_id}',
+                                            create_time ='${petRegInfo[0].create_time}',
+                                            update_time ='${petRegInfo[0].update_time}',
+                                            punish_info ='${petRegInfo[0].punish_info || ""}' 
+                                        where dog_reg_num = ${dogRegNum} and id= '${petRegId}' `;
+    await conn.query(sysChronizePetRegInfoSql);
+    /**
+     * 同步master信息
+     */
+    const petMasterInfo = await conn.query(`select * from pet_master where id = '${petRegInfo[0].master_id}' `);
+    const sysChronizePetMasterInfoSql = `update wx_pet_master
+       set real_name = '${petMasterInfo[0].real_name}',
+       contact_phone = '${petMasterInfo[0].contact_phone}',
+       id_number = '${petMasterInfo[0].id_number}',
+       residence_permit = '${petMasterInfo[0].residence_permit}',
+       residence_permit_pic2 = '${petMasterInfo[0].residence_permit_pic2}',
+       id_number_pic1 = '${petMasterInfo[0].id_number_pic1}', 
+       id_number_pic2 = '${petMasterInfo[0].id_number_pic2}'
+      where id = '${petRegInfo[0].master_id}' `
+    await conn.query(sysChronizePetMasterInfoSql);
+
+    await conn.query(` update pet_register_info set locking = 1  where dog_reg_num = ${dogRegNum} and id= '${petRegId}' `);
+    const wxPetRegSql = ` update wx_pet_register_info set pet_state = 3 ,submit_source = 2 ,audit_status = 0,pay_type = 1 ,audit_type = 2, year_latest_order_num = ? where dog_reg_num = ? and id= '${petRegId}' `;
     const yearRecordModel = {
         pet_id: petRegId,
         audit_status: 0,
@@ -532,14 +563,14 @@ exports.upperldDogRegNum = async (params, petRegId, uuid, orderNum) => {
     return addpet;
 };
 exports.addinformations = async (params, petRegId, uuid, orderNum) => {
+    console.log(566, params);
     const oldId = params.oldId;
     //更新已升级的状态
     const updateOldPetSql = "update old_pet_info set state = 2 where id = ? ";
     await conn.query(updateOldPetSql, [oldId]);
-    const datetime = moment(new Date()).format("YYYYMMDDHHmmss");
-    const addtime = moment(new Date())
-        .add(1, "y")
-        .format("YYYYMMDDHHmmss");
+    const datetime = moment(params.firstRegTime || new Date(), 'YYYY-MM-DD').format("YYYYMMDDHHmmss");
+    const createTime = moment().format("YYYYMMDDHHmmss");
+    const addtime = moment(params.firstRegTime || new Date(), 'YYYY-MM-DD').format("YYYYMMDDHHmmss");
     const year = moment(new Date()).format("YYYY");
     //处理参数
     const handleParams = {
@@ -606,7 +637,7 @@ exports.addinformations = async (params, petRegId, uuid, orderNum) => {
                            )
                        VALUES
                         ('${petRegId}','${handleParams.petName}',${handleParams.gender},1,0,'${handleParams.breed}','${handleParams.coatColor}','${handleParams.birthday}','${handleParams.areaCode}',
-                        '${datetime}','${datetime}','${addtime}',2,'${handleParams.petPhotoUrl}','${uuid}','${handleParams.openid}','${datetime}',3,${handleParams.oldId},
+                        '${datetime}','${datetime}','${addtime}',2,'${handleParams.petPhotoUrl}','${uuid}','${handleParams.openid}','${createTime}',3,${handleParams.oldId},
                         '${handleParams.receiveName}','${handleParams.receivePhone}','${handleParams.receiveAddr}',${handleParams.receive},0,1)`;
 
     const mastersql = `INSERT INTO wx_pet_master (
