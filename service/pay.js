@@ -197,3 +197,11 @@ exports.unfolderToPay = async (openid, orderNum, totalPrice) => {
   };
   return resData;
 };
+
+/**
+ * 
+ */
+exports.updateUpperOldOrder = async (orderNum, orderStatus, payTime, targetOrderId, orderSource) => {
+  let sql = ` update wx_order set order_status = ?, pay_time = ?,trade_num = ?,order_source = ?   where order_num = ?  `;
+  return await conn.query(sql, [orderStatus, payTime, targetOrderId, orderSource, orderNum]);
+};

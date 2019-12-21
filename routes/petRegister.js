@@ -292,8 +292,7 @@ router.post("/queryRegStatu", async (req, res) => {
         renewTime: obj.renew_time ?
           moment(obj.renew_time, "YYYYMMDDHHmmss").format(
             "YYYY-MM-DD HH:mm:ss"
-          ) :
-          "",
+          ) : "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
@@ -550,8 +549,7 @@ router.post("/findPetInfosByIdNum", async (req, res) => {
         renewTime: obj.renew_time ?
           moment(obj.renew_time, "YYYYMMDDHHmmss").format(
             "YYYY-MM-DD HH:mm:ss"
-          ) :
-          "",
+          ) : "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
@@ -593,11 +591,9 @@ router.post("/queryRegList", async (req, res) => {
       let checkStatus = obj.audit_status;
       return {
         expireTime: obj.expire_time ?
-          moment(obj.expire_time, "YYYYMMDDHHmmss").format("YYYY-MM-DD") :
-          "",
+          moment(obj.expire_time, "YYYYMMDDHHmmss").format("YYYY-MM-DD") : "",
         birthday: obj.birthday ?
-          moment(obj.birthday, "YYYYMMDD").format("YYYY-MM-DD") :
-          "",
+          moment(obj.birthday, "YYYYMMDD").format("YYYY-MM-DD") : "",
         idNumber: obj.id_number.replace(
           /^(.{6})(?:\d+)(.{4})$/,
           "$1********$2"
@@ -616,8 +612,7 @@ router.post("/queryRegList", async (req, res) => {
         renewTime: obj.renew_time ?
           moment(obj.renew_time, "YYYYMMDDHHmmss").format(
             "YYYY-MM-DD HH:mm:ss"
-          ) :
-          "",
+          ) : "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
@@ -1108,7 +1103,7 @@ router.post("/upperldDogRegNum", async (req, res) => {
     creator: params.openid,
     order_status: 0,
     create_time: moment().format("YYYY-MM-DD HH:mm:ss"),
-    order_source: 2,
+    order_source: 3,
     total_price: totalPrice,
     pet_id: petRegId,
     expresscost
@@ -1324,8 +1319,7 @@ router.post("/queryYearCheckRecord", async (req, res) => {
         renewTime: obj.renew_time ?
           moment(obj.renew_time, "YYYYMMDDHHmmss").format(
             "YYYY-MM-DD HH:mm:ss"
-          ) :
-          "",
+          ) : "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
@@ -1458,8 +1452,7 @@ router.post("/queryOldUpper", async (req, res) => {
         renewTime: obj.renew_time ?
           moment(obj.renew_time, "YYYYMMDDHHmmss").format(
             "YYYY-MM-DD HH:mm:ss"
-          ) :
-          "",
+          ) : "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
