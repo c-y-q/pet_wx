@@ -7,7 +7,9 @@ const axios = require("axios");
 const orderService = require("../service/pay");
 const caches = require("../conn/redis");
 
-const { cache } = caches;
+const {
+  cache
+} = caches;
 
 function regIdCard(idcode) {
   const weight_factor = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2];
@@ -32,10 +34,10 @@ const imgHttp = "http://192.168.50.111:7001"; //"https://api.hbzner.com/dog";
 //   expireTime
 // } = require('../conn/redis');
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, "/home/manage_sys/app/public/images");
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     cb(null, `${Date.now()}${orderService.getMyUUId(10)}.jpg`);
   }
 });
@@ -235,7 +237,9 @@ router.post("/wxLogin", async (req, res, next) => {
   const appSecreat = "0eac0a4f5ed9a3f46dc882833d035956";
   //获取用户的openId和sessionKey
   const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appId}&secret=${appSecreat}&js_code=${code}&grant_type=authorization_code`;
-  const { data } = await axios.get(url);
+  const {
+    data
+  } = await axios.get(url);
   console.log(157, data);
   if (data.errcode) {
     throw {
@@ -285,16 +289,15 @@ router.post("/queryRegStatu", async (req, res) => {
         dogRegNum: obj.dog_reg_num || 0,
         petName: obj.pet_name || "",
         petState: obj.pet_state,
-        renewTime: obj.renew_time
-          ? moment(obj.renew_time, "YYYYMMDDHHmmss").format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          : "",
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) :
+          "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
-        petPhotoUrl:
-          (obj.pet_photo_url &&
+        petPhotoUrl: (obj.pet_photo_url &&
             obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
         masterName: obj.real_name || "",
@@ -538,23 +541,21 @@ router.post("/findPetInfosByIdNum", async (req, res) => {
         petColor: obj.coat_color || "",
         petGender: obj.gender == 1 ? "雄" : obj.gender == 2 ? "雌" : "未知",
         petRegId: obj.id,
-        checkStatus:
-          checkStatus == 1 ? "已通过" : checkStatus == 2 ? "未通过" : "审核中",
+        checkStatus: checkStatus == 1 ? "已通过" : checkStatus == 2 ? "未通过" : "审核中",
         auditRemarks: obj.audit_remarks,
         areaName: obj.name || "",
         dogRegNum: obj.dog_reg_num || "",
         petName: obj.pet_name || "",
         petState: obj.pet_state,
-        renewTime: obj.renew_time
-          ? moment(obj.renew_time, "YYYYMMDDHHmmss").format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          : "",
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) :
+          "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
-        petPhotoUrl:
-          (obj.pet_photo_url &&
+        petPhotoUrl: (obj.pet_photo_url &&
             obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
         masterName: obj.real_name || "",
@@ -591,12 +592,12 @@ router.post("/queryRegList", async (req, res) => {
     petRegInfo = result.map(obj => {
       let checkStatus = obj.audit_status;
       return {
-        expireTime: obj.expire_time
-          ? moment(obj.expire_time, "YYYYMMDDHHmmss").format("YYYY-MM-DD")
-          : "",
-        birthday: obj.birthday
-          ? moment(obj.birthday, "YYYYMMDD").format("YYYY-MM-DD")
-          : "",
+        expireTime: obj.expire_time ?
+          moment(obj.expire_time, "YYYYMMDDHHmmss").format("YYYY-MM-DD") :
+          "",
+        birthday: obj.birthday ?
+          moment(obj.birthday, "YYYYMMDD").format("YYYY-MM-DD") :
+          "",
         idNumber: obj.id_number.replace(
           /^(.{6})(?:\d+)(.{4})$/,
           "$1********$2"
@@ -612,22 +613,20 @@ router.post("/queryRegList", async (req, res) => {
         dogRegNum: obj.dog_reg_num || "",
         petName: obj.pet_name || "",
         petState: obj.pet_state,
-        renewTime: obj.renew_time
-          ? moment(obj.renew_time, "YYYYMMDDHHmmss").format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          : "",
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) :
+          "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
-        petPhotoUrl:
-          (obj.pet_photo_url &&
+        petPhotoUrl: (obj.pet_photo_url &&
             obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
         masterName: obj.real_name || "",
         masterAdress: obj.residential_address || "",
-        contactPhone:
-          (obj.contact_phone &&
+        contactPhone: (obj.contact_phone &&
             obj.contact_phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")) ||
           ""
       };
@@ -642,7 +641,10 @@ router.post("/directBindDogRegNum", async (req, res) => {
   const openId = req.body.openid;
   const unionId = req.body.unionid;
   const dogRegNum = req.body.dogRegNum;
-  const { phone, code } = req.body;
+  const {
+    phone,
+    code
+  } = req.body;
 
   let isfree = "";
   const cacheWxResCount = await cache.get(phone);
@@ -1106,7 +1108,7 @@ router.post("/upperldDogRegNum", async (req, res) => {
     creator: params.openid,
     order_status: 0,
     create_time: moment().format("YYYY-MM-DD HH:mm:ss"),
-    order_source: 3,
+    order_source: 2,
     total_price: totalPrice,
     pet_id: petRegId,
     expresscost
@@ -1302,12 +1304,10 @@ router.post("/queryYearCheckRecord", async (req, res) => {
       let checkStatus = obj.audit_status;
       return {
         orderNum: obj.order_num,
-        photoUrl:
-          (obj.photo_url &&
+        photoUrl: (obj.photo_url &&
             obj.photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
-        photoUrl2:
-          (obj.photo_url2 &&
+        photoUrl2: (obj.photo_url2 &&
             obj.photo_url2.replace("/home/manage_sys/app", imgHttp)) ||
           "",
         payType: obj.pay_type,
@@ -1321,22 +1321,20 @@ router.post("/queryYearCheckRecord", async (req, res) => {
         dogRegNum: obj.dog_reg_num || 0,
         petName: obj.pet_name || "",
         petState: obj.pet_state,
-        renewTime: obj.renew_time
-          ? moment(obj.renew_time, "YYYYMMDDHHmmss").format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          : "",
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) :
+          "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
-        petPhotoUrl:
-          (obj.pet_photo_url &&
+        petPhotoUrl: (obj.pet_photo_url &&
             obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
         masterName: obj.real_name || "",
         masterAdress: obj.residential_address || "",
-        contactPhone:
-          (obj.contact_phone &&
+        contactPhone: (obj.contact_phone &&
             obj.contact_phone.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2")) ||
           "",
         checker: obj.checker || "",
@@ -1457,16 +1455,15 @@ router.post("/queryOldUpper", async (req, res) => {
         dogRegNum: obj.dog_reg_num || 0,
         petName: obj.pet_name || "",
         petState: obj.pet_state,
-        renewTime: obj.renew_time
-          ? moment(obj.renew_time, "YYYYMMDDHHmmss").format(
-              "YYYY-MM-DD HH:mm:ss"
-            )
-          : "",
+        renewTime: obj.renew_time ?
+          moment(obj.renew_time, "YYYYMMDDHHmmss").format(
+            "YYYY-MM-DD HH:mm:ss"
+          ) :
+          "",
         createTime: moment(obj.create_time, "YYYYMMDDHHmmss").format(
           "YYYY-MM-DD HH:mm:ss"
         ),
-        petPhotoUrl:
-          (obj.pet_photo_url &&
+        petPhotoUrl: (obj.pet_photo_url &&
             obj.pet_photo_url.replace("/home/manage_sys/app", imgHttp)) ||
           "",
         masterName: obj.real_name || "",
