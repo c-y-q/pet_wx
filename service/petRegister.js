@@ -568,9 +568,11 @@ exports.addinformations = async (params, petRegId, uuid, orderNum) => {
     //更新已升级的状态
     const updateOldPetSql = "update old_pet_info set state = 2 where id = ? ";
     await conn.query(updateOldPetSql, [oldId]);
+    console.log(571, params.firstRegTime)
     const datetime = moment(params.firstRegTime || new Date(), 'YYYY-MM-DD').format("YYYYMMDDHHmmss");
     const createTime = moment().format("YYYYMMDDHHmmss");
     const addtime = moment(params.firstRegTime || new Date(), 'YYYY-MM-DD').format("YYYYMMDDHHmmss");
+    console.log(575, addtime)
     const year = moment(new Date()).format("YYYY");
     //处理参数
     const handleParams = {
