@@ -10,7 +10,7 @@ module.exports = {
             port: 3306,
             user: 'root',
             password: '123456',
-            database: 'manage-sys-pro-test',
+            database: 'manage-sys-pro-emp',
             charset: 'utf8',
             waitForConnections: true,
             connectionLimit: 10, //单次可创建最大连接数
@@ -21,7 +21,7 @@ module.exports = {
             port: 3306,
             user: 'root',
             password: '123456',
-            database: 'manage-sys-pro-test',
+            database: 'manage-sys-pro-emp',
             charset: 'utf8',
             waitForConnections: true,
             connectionLimit: 10, //单次可创建最大连接数
@@ -32,7 +32,7 @@ module.exports = {
             port: 3306,
             user: 'root',
             password: '123456',
-            database: 'manage-sys-pro-test',
+            database: 'manage-sys-pro-emp',
             charset: 'utf8',
             waitForConnections: true,
             connectionLimit: 10, //单次可创建最大连接数

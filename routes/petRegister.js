@@ -255,6 +255,10 @@ router.post("/wxLogin", async (req, res, next) => {
     };
   }
   const bindWxUserInfo = await service.isWxPubBind(data.unionid, data.openid);
+  /**
+   * 更新小程序openId,或者插入
+   */
+  await service.addwxParagramOpenId(data.unionid, data.openid);
   if (bindWxUserInfo.length == 0) {
     res.json({
       status: 10010,

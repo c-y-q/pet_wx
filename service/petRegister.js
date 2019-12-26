@@ -128,7 +128,7 @@ function addyear() {
         .format("YYYYMMDDHHmmss");
 }
 exports.isWxPubBind = async (unionId, openId) => {
-    const sql = `select * from wx_pub where unionId = '${unionId}' or openId = '${openId}' `;
+    const sql = `select * from wx_pub where unionId = '${unionId}' `;
     const result = await conn.query(sql);
     return result;
 };
@@ -909,3 +909,9 @@ exports.findWxPetRegByIdNum = async (idNumber, petRegId) => {
         [idNumber, petRegId]
     );
 };
+
+
+exports.addwxParagramOpenId = async (unionid, openid) => {
+    const sql = 'update wx_pub set pa_openId = ? where unionId = ? ';
+    return await conn.query(sql, [openid, unionid]);
+}
