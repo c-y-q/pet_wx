@@ -79,13 +79,4 @@ module.exports = {
             db: 0,
         }
     },
-    pay: {
-        mid: "898130448161057", // 商户号  998340149100000
-        merchantUserId: "898340149000005", // 商户用户名
-        tid: "04936623", // 终端号 88880001
-        Authorization: 'Authorization', // 权限
-        md5Key: 'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE',
-        notifyUrl: 'http://eggsy.free.idcfengye.com/pay/wpPayNotify',
-        unfolderUrl: 'https://qr.chinaums.com/netpay-route-server/api/'
-    }
 }
