@@ -39,14 +39,7 @@ module.exports = {
             queueLimit: 0 //连接池的最大请求数，从getConnection方法前依次排队。设置为0将没有限制
         }
     },
-    wxpublic: {
-        appid: 'wx833268732e68920c',
-        appsecret: '92d5f8b18485998950486d25a41ca14c',
-        access_token: '',
-        token: '123456',
-        encodingAESKey: 'olz6qa2Ew77LFRB7GVGoHraPeGvVBX3SerO0ehVIjFp',
-        checkSignature: true // 可选，默认为true。由于微信公众平台接口调试工具在明文模式下不发送签名，所以如要使用该测试工具，请将其设置为false
-    },
+
     // redis: {
     //     config: [{
     //         port: 6379,
@@ -79,13 +72,5 @@ module.exports = {
             db: 0,
         }
     },
-    pay: {
-        mid: "898130448161057", // 商户号  998340149100000
-        merchantUserId: "898340149000005", // 商户用户名
-        tid: "04936623", // 终端号 88880001
-        Authorization: 'Authorization', // 权限
-        md5Key: 'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE',
-        notifyUrl: 'http://eggsy.free.idcfengye.com/pay/wpPayNotify',
-        unfolderUrl: 'https://qr.chinaums.com/netpay-route-server/api/'
-    }
+
 }
