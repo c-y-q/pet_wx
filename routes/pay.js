@@ -112,6 +112,7 @@ router.post('/wpPay', async (req, res) => {
             msg: 'order is not right!'
         }
     }
+    console.log(115, data.data.miniPayRequest);
     res.json({
         status: 200,
         result: data.data.miniPayRequest
