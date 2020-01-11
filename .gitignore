@@ -2,3 +2,4 @@ node_modules
 public
 test
 .DS_Store
+config
