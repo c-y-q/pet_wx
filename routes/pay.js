@@ -128,34 +128,34 @@ router.post('/wpPayNotify', async (req, res) => {
      * 1.2查询本系统订单状态，获取金额进行对比
      */
     try {
-        const orderInfo = await service.queryOrder('', merOrderId);
-        if (!orderInfo.length) {
-            res.send('FAILED');
-            return;
-        }
-        if (!(wexResPonse.status == 'TRADE_SUCCESS' && wexResPonse.targetSys == 'WXPay' && wexResPonse.mid == config.pay.mid && wexResPonse.tid == config.pay.tid && orderInfo[0] && orderInfo[0].total_price * 100 == wexResPonse.totalAmount)) {
-            res.send('FAILED');
-            return;
-        }
-        /**
-         * 防止假通知，验证签名
-         */
-        const md5Key = config.pay.md5Key;
-        const wxResSign = wexResPonse.sign || '';
-        if (wexResPonse.sign) {
-            delete wexResPonse.sign;
-        };
-        const Values = Object.keys(wexResPonse).sort();
-        let md5str = '';
-        for (let key of Values) {
-            md5str += `${key}=${wexResPonse[key]}&`
-        }
-        md5str = md5str.slice(0, -1) + md5Key;
-        let mysign = md5(md5str).toUpperCase();
-        if (!wxResSign || !(mysign == wxResSign)) {
-            res.send('FAILED');
-            return;
-        }
+        // const orderInfo = await service.queryOrder('', merOrderId);
+        // if (!orderInfo.length) {
+        //     res.send('FAILED');
+        //     return;
+        // }
+        // if (!(wexResPonse.status == 'TRADE_SUCCESS' && wexResPonse.targetSys == 'WXPay' && wexResPonse.mid == config.pay.mid && wexResPonse.tid == config.pay.tid && orderInfo[0] && orderInfo[0].total_price * 100 == wexResPonse.totalAmount)) {
+        //     res.send('FAILED');
+        //     return;
+        // }
+        // /**
+        //  * 防止假通知，验证签名
+        //  */
+        // const md5Key = config.pay.md5Key;
+        // const wxResSign = wexResPonse.sign || '';
+        // if (wexResPonse.sign) {
+        //     delete wexResPonse.sign;
+        // };
+        // const Values = Object.keys(wexResPonse).sort();
+        // let md5str = '';
+        // for (let key of Values) {
+        //     md5str += `${key}=${wexResPonse[key]}&`
+        // }
+        // md5str = md5str.slice(0, -1) + md5Key;
+        // let mysign = md5(md5str).toUpperCase();
+        // if (!wxResSign || !(mysign == wxResSign)) {
+        //     res.send('FAILED');
+        //     return;
+        // }
         /**
          * 2.1更新订单状态
          */
