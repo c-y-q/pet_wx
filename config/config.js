@@ -85,7 +85,7 @@ module.exports = {
         tid: "04936623", // 终端号 88880001
         Authorization: 'Authorization', // 权限
         md5Key: 'rkx3iEaYfzWrDDCzsKPmfBXsWJpEj2M7SsChiestNkdkc5yE',
-        notifyUrl: 'http://eggsy.free.idcfengye.com/pay/wpPayNotify',
+        notifyUrl: 'http://wxpet.free.idcfengye.com/pay/wpPayNotify', // http://eggsy.free.idcfengye.com/pay/wpPayNotify
         unfolderUrl: 'https://qr.chinaums.com/netpay-route-server/api/'
     }
 }

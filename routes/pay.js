@@ -93,8 +93,10 @@ router.post('/wpPay', async (req, res) => {
     for (const str in rest) {
         longStr += str + '=' + rest[str] + '&';
     }
+    console.log('---119---', longStr);
     let signs = md5(longStr.substring(0, longStr.length - 1) + md5Key); // 移除最后一个 & 符号 生成签名
     params.sign = signs;
+    console.log('---98---', params);
     const requestOptins = {
         method: 'POST',
         headers: {
