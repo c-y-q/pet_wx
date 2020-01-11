@@ -1,6 +1,6 @@
 const conn = require("../conn/conn");
 const moment = require("moment");
-const imgHttp = "http://192.168.50.111:7001";
+const imgHttp = "https://api.hbzner.com/dog";
 const imgDbPath = "/home/manage_sys/app";
 const config = require("../config/config");
 const replaceImgPath = "/home/manage_sys/app";

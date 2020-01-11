@@ -27,7 +27,7 @@ function regIdCard(idcode) {
 const regPhoneNum = /(^1[3456789]\d{9}$)|(^(0\d{2,3}\-)?([2-9]\d{6,7})+(\-\d{1,6})?$)/;
 const regDogRegNum = /^\d{6}$/;
 const moment = require("moment");
-const imgHttp = "http://192.168.50.111:7001"; //"https://api.hbzner.com/dog";
+const imgHttp = "https://api.hbzner.com/dog";
 // const {
 //   cache,
 //   reqCount,
@@ -86,16 +86,16 @@ router.post("/addpetRegist2", async (req, res, next) => {
   //   }
   //   cache.incr(cacheKey);
   // }
-  const bindWxUserInfo = await service.isWxPubBind(
-    params.unionid,
-    params.openid
-  );
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: "0001",
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(
+  //   params.unionid,
+  //   params.openid
+  // );
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: "0001",
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   const orderStatusInfo = await orderService.queryOrderStatus(
     params.openid,
     1,
@@ -254,19 +254,19 @@ router.post("/wxLogin", async (req, res, next) => {
       respMsg: "缺失unionid !"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(data.unionid, data.openid);
-  /**
-   * 更新小程序openId,或者插入
-   */
-  await service.addwxParagramOpenId(data.unionid, data.openid);
-  if (bindWxUserInfo.length == 0) {
-    res.json({
-      status: 10010,
-      data,
-      respMsg: " to bind wxpulic !"
-    });
-    return;
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(data.unionid, data.openid);
+  // /**
+  //  * 更新小程序openId,或者插入
+  //  */
+  // await service.addwxParagramOpenId(data.unionid, data.openid);
+  // if (bindWxUserInfo.length == 0) {
+  //   res.json({
+  //     status: 10010,
+  //     data,
+  //     respMsg: " to bind wxpulic !"
+  //   });
+  //   return;
+  // }
   res.json({
     data
   });
@@ -356,13 +356,13 @@ router.post("/addDogRegNum", async (req, res) => {
       respMsg: " lost idNumber"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!openId || !unionId) {
     throw {
       status: 10011,
@@ -424,13 +424,13 @@ router.post("/addDogRegNum", async (req, res) => {
 router.post("/findNotBindRegIdsByOpenId", async (req, res) => {
   const openId = req.body.openid;
   const unionId = req.body.unionid;
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!openId || !unionId) {
     throw {
       status: 10011,
@@ -471,13 +471,13 @@ router.post("/findNotHasBindDogRegNum", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!dogRegNum) {
     throw {
       respCode: "0001",
@@ -509,13 +509,13 @@ router.post("/findPetInfosByIdNum", async (req, res) => {
       respMsg: " lost idNumber"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!regPhoneNum.test(contactPhone)) {
     throw {
       respCode: "0001",
@@ -581,13 +581,13 @@ router.post("/queryRegList", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   const result = await service.queryRegList(openId, unionId);
   let petRegInfo = [];
   if (result.length > 0) {
@@ -670,13 +670,13 @@ router.post("/directBindDogRegNum", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!dogRegNum) {
     throw {
       respCode: "0001",
@@ -763,16 +763,16 @@ router.post("/updatePetRegInfo", async (req, res, next) => {
   //   }
   //   cache.incr(cacheKey);
   // }
-  const bindWxUserInfo = await service.isWxPubBind(
-    params.unionid,
-    params.openid
-  );
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: "0001",
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(
+  //   params.unionid,
+  //   params.openid
+  // );
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: "0001",
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!params.petPhotoUrl) {
     throw {
       status: "0001",
@@ -868,13 +868,13 @@ router.post("/unbindPetDogRegNum", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!dogRegNum) {
     throw {
       respCode: "0001",
@@ -921,13 +921,13 @@ router.post("/yearCheck", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   if (!regDogRegNum.test(dogRegNum)) {
     throw {
       respCode: "0001",
@@ -1006,13 +1006,13 @@ router.post("/updateYearCheckInfo", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
 
   const options = {
     photoUrl: req.body.photoUrl,
@@ -1044,16 +1044,16 @@ router.post("/upperldDogRegNum", async (req, res) => {
       respMsg: "缺失unionid！"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(
-    params.unionid,
-    params.openid
-  );
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: "0001",
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(
+  //   params.unionid,
+  //   params.openid
+  // );
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: "0001",
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
 
   //根据身份证号，判断如果已有一条该犬主信息，则不能再申请添加
   const hasUserBindSysInfo = await service.hasUserBindSysInfo(params.idNumber);
@@ -1157,16 +1157,16 @@ router.post("/addpetRegist", async (req, res) => {
   //   }
   //   cache.incr(cacheKey);
   // }
-  const bindWxUserInfo = await service.isWxPubBind(
-    params.unionid,
-    params.openid
-  );
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: "0001",
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(
+  //   params.unionid,
+  //   params.openid
+  // );
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: "0001",
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
 
   if (!params.petPhotoUrl) {
     throw {
@@ -1361,16 +1361,16 @@ router.post("/isCanUpperOld", async (req, res) => {
       respMsg: "缺失unionid！"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(
-    params.unionid,
-    params.openid
-  );
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: "0001",
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(
+  //   params.unionid,
+  //   params.openid
+  // );
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: "0001",
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
 
   const options = {
     djhm: params.djhm || "",
@@ -1427,13 +1427,13 @@ router.post("/queryOldUpper", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   const result = await service.queryOldUpper(openId);
   let petRegInfo = [];
   if (result.length > 0) {
@@ -1495,13 +1495,13 @@ router.post("/getPriceAndExressCost", async (req, res) => {
       respMsg: " lost params"
     };
   }
-  const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
-  if (bindWxUserInfo.length == 0) {
-    throw {
-      status: 10010,
-      respMsg: " to bind wxpulic !"
-    };
-  }
+  // const bindWxUserInfo = await service.isWxPubBind(unionId, openId);
+  // if (bindWxUserInfo.length == 0) {
+  //   throw {
+  //     status: 10010,
+  //     respMsg: " to bind wxpulic !"
+  //   };
+  // }
   const expresscost = await orderService.queryExpressCost();
   const getPrice = await service.getPriceAndExressCost();
   res.json({
